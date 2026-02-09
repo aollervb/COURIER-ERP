@@ -1,0 +1,32 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="'Account ' + ${account.code}">Account</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1 th:text="${account.code} + ' — ' + ${account.displayName}">Account</h1>
+
+<p><b>Status:</b> <span th:text="${account.active} ? 'Active' : 'Inactive'">Active</span></p>
+<p><b>Email:</b> <span th:text="${account.email}">-</span></p>
+<p><b>Phone:</b> <span th:text="${account.phone}">-</span></p>
+<p><b>Public ID:</b> <span th:text="${account.publicId}">uuid</span></p>
+<p><b>External Ref:</b> <span th:text="${account.externalRef}">PORTAL:ORG:...</span></p>
+
+<div>
+    <form th:if="${account.active}" th:action="@{/accounts/{id}/deactivate(id=${account.id})}" method="post" style="display:inline;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit">Deactivate</button>
+    </form>
+
+    <form th:if="${!account.active}" th:action="@{/accounts/{id}/activate(id=${account.id})}" method="post" style="display:inline;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit">Activate</button>
+    </form>
+</div>
+
+<p><a th:href="@{/accounts}">Back to list</a></p>
+
+</body>
+</html>

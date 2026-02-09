@@ -1,0 +1,87 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Accounts</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1>Accounts</h1>
+
+<form th:action="@{/accounts}" method="get">
+    <input type="text" name="q" placeholder="Search by code or name" th:value="${q}"/>
+
+    <select name="active">
+        <option th:value="" th:selected="${active == null}">All</option>
+        <option th:value="true" th:selected="${active != null and active}">Active</option>
+        <option th:value="false" th:selected="${active != null and !active}">Inactive</option>
+    </select>
+
+    <button type="submit">Search</button>
+</form>
+
+<br/>
+
+<table border="1" cellspacing="0" cellpadding="6">
+    <thead>
+    <tr>
+        <th>Code</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="a : ${accounts.content}">
+        <td>
+            <a th:href="@{/accounts/{id}(id=${a.id})}" th:text="${a.code}">ACCT-000001</a>
+        </td>
+        <td th:text="${a.displayName}">Customer Name</td>
+        <td th:text="${a.email}">email@example.com</td>
+        <td th:text="${a.phone}">+1...</td>
+        <td th:text="${a.active} ? 'Active' : 'Inactive'">Active</td>
+
+        <td>
+            <!-- If active -> show Deactivate, else show Activate -->
+            <form th:if="${a.active}" th:action="@{/accounts/{id}/deactivate(id=${a.id})}" method="post" style="display:inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit">Deactivate</button>
+            </form>
+
+            <form th:if="${!a.active}" th:action="@{/accounts/{id}/activate(id=${a.id})}" method="post" style="display:inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit">Activate</button>
+            </form>
+        </td>
+    </tr>
+
+    <tr th:if="${accounts.totalElements == 0}">
+        <td colspan="6">No accounts found.</td>
+    </tr>
+    </tbody>
+</table>
+
+<br/>
+
+<div>
+    <span th:text="'Showing ' + ${accounts.numberOfElements} + ' of ' + ${accounts.totalElements} + ' accounts'"></span>
+</div>
+
+<div>
+    <a th:if="${accounts.hasPrevious()}"
+       th:href="@{/accounts(q=${q}, active=${active}, page=${accounts.number - 1}, size=${accounts.size})}">
+        Prev
+    </a>
+
+    <span th:text="'Page ' + ${accounts.number + 1} + ' / ' + ${accounts.totalPages}"></span>
+
+    <a th:if="${accounts.hasNext()}"
+       th:href="@{/accounts(q=${q}, active=${active}, page=${accounts.number + 1}, size=${accounts.size})}">
+        Next
+    </a>
+</div>
+
+</body>
+</html>
