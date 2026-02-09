@@ -17,15 +17,19 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SpringSecurity {
+
+    /** URL the login form must POST to. There is no controller for this path — the Security filter handles it. */
+    public static final String LOGIN_PROCESSING_URL = "/auth/login-process";
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(reqConfigurer -> {
                             reqConfigurer
                                     .requestMatchers(
-                                            "/templates/auth/login",
-                                            "/templates/auth/signup",
-                                            "/templates/auth/signup/**",
+                                            "/auth/login",
+                                            "/auth/signup",
+                                            "/auth/signup/**",
                                             "/css/**", "/js/**", "/images/**",
                                             "/error",
                                             "/api/public/**"
@@ -39,17 +43,16 @@ public class SpringSecurity {
                 )
 
                 .formLogin(form -> form
-                        .loginPage("/templates/auth/login")
-                        // IMPORTANT: processing endpoint != login page
-                        .loginProcessingUrl("/templates/auth/login-process")
+                        .loginPage("/auth/login")
+                        .loginProcessingUrl(LOGIN_PROCESSING_URL)
                         .defaultSuccessUrl("/", true)
-                        .failureUrl("/templates/auth/login?error=true")
+                        .failureUrl("/auth/login?error=true")
                         .permitAll()
                 )
 
                 .logout(logout -> logout
-                        .logoutUrl("/templates/auth/logout")
-                        .logoutSuccessUrl("/templates/auth/login?logout=true")
+                        .logoutUrl("/auth/logout")
+                        .logoutSuccessUrl("/auth/login?logout=true")
                 );
 
 

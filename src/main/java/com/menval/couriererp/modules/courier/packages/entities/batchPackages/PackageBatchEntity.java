@@ -17,7 +17,7 @@ import java.time.Instant;
                 @Index(name = "idx_batch_tenant_status", columnList = "tenant_id,status"),
                 @Index(name = "idx_batch_tenant_mode", columnList = "tenant_id,transport_mode"),
                 @Index(name = "idx_batch_departure", columnList = "tenant_id,planned_departure_at"),
-                @Index(name = "idx_batch_container_code", columnList = "tenant_id,container_code")
+                @Index(name = "idx_batch_container_code", columnList = "tenant_id,reference_code")
         }
 )
 @Getter @Setter

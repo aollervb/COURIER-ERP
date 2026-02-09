@@ -20,7 +20,8 @@
     <p>You have been logged out.</p>
 </div>
 
-<form th:action="@{/templates/auth/login-process}" method="post">
+<!-- Form must POST to the same URL as SpringSecurity.LOGIN_PROCESSING_URL (/auth/login-process). No controller for this path - Security filter handles it. -->
+<form th:action="@{/auth/login-process}" method="post">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
     <input name="username" />
     <input name="password" type="password" />
@@ -29,7 +30,7 @@
 
 <p>
     Don’t have an account?
-    <a th:href="@{/templates/auth/signup}">Sign up</a>
+    <a th:href="@{/auth/signup}">Sign up</a>
 </p>
 
 </body>
