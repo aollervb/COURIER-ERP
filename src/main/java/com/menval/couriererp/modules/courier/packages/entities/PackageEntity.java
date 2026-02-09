@@ -16,7 +16,7 @@ import java.time.Instant;
                 @Index(name = "idx_packages_status", columnList = "status")
         },
         uniqueConstraints = {
-                @UniqueConstraint(name = "uq_packages_carrier_tracking", columnNames = {"carrier", "originalTrackingNumber"})
+                @UniqueConstraint(name = "uq_packages_tenant_carrier_tracking", columnNames = {"tenant_id", "carrier", "originalTrackingNumber"})
         }
 )
 @Data

@@ -27,7 +27,8 @@ public class SpringSecurity {
                                             "/templates/auth/signup",
                                             "/templates/auth/signup/**",
                                             "/css/**", "/js/**", "/images/**",
-                                            "/error"
+                                            "/error",
+                                            "/api/public/**"
                                     ).permitAll()
                                     .anyRequest()
                                     .authenticated();

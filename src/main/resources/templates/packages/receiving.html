@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Receive packages</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1>Receive packages</h1>
+
+<p th:if="${message}" th:text="${message}" style="color: green;"></p>
+<p th:if="${error}" th:text="${error}" style="color: red;"></p>
+<div th:if="${batchResult}" th:with="r=${batchResult}">
+    <p th:if="${r.receivedCount > 0}" style="color: green;">
+        <strong th:text="${r.receivedCount + ' new package(s) received.'}">0 new package(s) received.</strong>
+    </p>
+    <p th:if="${r.duplicateCount > 0}" style="color: #666;">
+        <span th:text="${r.duplicateCount + ' already in system (skipped).'}">0 already in system.</span>
+    </p>
+    <p th:if="${!#lists.isEmpty(r.invalidLines)}" style="color: orange;">
+        <span th:text="${'Invalid lines: ' + #lists.size(r.invalidLines)}">Invalid lines: 0</span>
+    </p>
+</div>
+
+<form th:action="@{/packages/receiving}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <label for="carrier">Carrier</label>
+    <select id="carrier" name="carrier" required>
+        <option value="">Select carrier</option>
+        <option th:each="c : ${carriers}" th:value="${c.name()}" th:text="${c.name()}">Carrier</option>
+    </select>
+
+    <label for="trackingNumbers">Tracking numbers (one per line)</label>
+    <textarea id="trackingNumbers" name="trackingNumbers" rows="12" cols="40" required
+              placeholder="Scan or paste; one tracking number per line. E.g. 50 packages = 50 lines, then submit once."
+              autofocus autocomplete="off"></textarea>
+
+    <button type="submit">Receive packages</button>
+</form>
+
+<p><em>Select carrier, then scan or paste tracking numbers (one per line). All packages are recorded with no owner until assigned later. Duplicates in the list or already in the system are skipped.</em></p>
+
+<hr/>
+
+<h2>Recently received (unassigned)</h2>
+
+<table border="1" cellspacing="0" cellpadding="6">
+    <thead>
+    <tr>
+        <th>Carrier</th>
+        <th>Tracking number</th>
+        <th>Received at</th>
+        <th>Status</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${packages.content}">
+        <td th:text="${p.carrier}">Carrier</td>
+        <td th:text="${p.originalTrackingNumber}">Tracking</td>
+        <td th:text="${#temporals.format(p.receivedAt, 'yyyy-MM-dd HH:mm')}">Received at</td>
+        <td th:text="${p.status}">Status</td>
+    </tr>
+    <tr th:if="${packages.totalElements == 0}">
+        <td colspan="4">No unassigned packages.</td>
+    </tr>
+    </tbody>
+</table>
+
+<div>
+    <span th:text="'Showing ' + ${packages.numberOfElements} + ' of ' + ${packages.totalElements}"></span>
+    <a th:if="${packages.hasPrevious()}" th:href="@{/packages/receiving(page=${packages.number - 1}, size=${packages.size})}">Prev</a>
+    <span th:text="'Page ' + (${packages.number} + 1) + ' / ' + ${packages.totalPages}"></span>
+    <a th:if="${packages.hasNext()}" th:href="@{/packages/receiving(page=${packages.number + 1}, size=${packages.size})}">Next</a>
+</div>
+
+</body>
+</html>
