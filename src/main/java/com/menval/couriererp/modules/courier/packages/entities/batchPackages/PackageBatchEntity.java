@@ -1,7 +1,7 @@
 package com.menval.couriererp.modules.courier.packages.entities.batchPackages;
 
 import com.menval.couriererp.auth.models.BaseUser;
-import com.menval.couriererp.modules.common.models.BaseModel;
+import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
@@ -22,7 +22,7 @@ import java.time.Instant;
 )
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
-public class PackageBatchEntity extends BaseModel {
+public class PackageBatchEntity extends TenantScopedBaseModel {
 
     @Column(name = "reference_code", nullable = false, length = 40, updatable = false)
     private String referenceCode;

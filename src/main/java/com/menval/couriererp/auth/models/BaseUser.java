@@ -1,10 +1,9 @@
 package com.menval.couriererp.auth.models;
 
-import com.menval.couriererp.modules.common.models.BaseModel;
+import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,15 +12,17 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(name = "uq_users_tenant_email", columnNames = {"tenant_id", "email"})
+}, indexes = {
+        @Index(name = "idx_users_email", columnList = "email"),
+        @Index(name = "idx_users_tenant", columnList = "tenant_id")
 })
 @Builder
 @AllArgsConstructor
-public class BaseUser extends BaseModel implements UserDetails{
+public class BaseUser extends TenantScopedBaseModel implements UserDetails {
 
     @Column(nullable = false)
     private String email;
@@ -53,6 +54,24 @@ public class BaseUser extends BaseModel implements UserDetails{
                 .map(r -> new SimpleGrantedAuthority("ROLE_" + r.name()))
                 .toList();
     }
+
+    /** Expose tenant ID for security/tenant context. */
+    public String getUserTenantId() {
+        return getTenantId();
+    }
+
+    public boolean isSuperAdmin() {
+        return roles != null && roles.contains(UserRoles.SUPER_ADMIN);
+    }
+
+    public boolean isTenantAdmin() {
+        return roles != null && roles.contains(UserRoles.ADMIN);
+    }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public Set<UserRoles> getRoles() { return roles; }
+    public void setRoles(Set<UserRoles> roles) { this.roles = roles; }
 
     public String getFirstName() {
         return firstName;

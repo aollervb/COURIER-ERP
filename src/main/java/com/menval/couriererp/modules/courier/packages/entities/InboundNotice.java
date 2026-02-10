@@ -1,6 +1,6 @@
 package com.menval.couriererp.modules.courier.packages.entities;
 
-import com.menval.couriererp.modules.common.models.BaseModel;
+import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import com.menval.couriererp.modules.courier.account.entities.AccountEntity;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -14,7 +14,7 @@ import lombok.Data;
         }
 )
 @Data
-public class InboundNotice extends BaseModel {
+public class InboundNotice extends TenantScopedBaseModel {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)

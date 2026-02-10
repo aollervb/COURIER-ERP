@@ -1,6 +1,6 @@
 package com.menval.couriererp.modules.courier.account.entities;
 
-import com.menval.couriererp.modules.common.models.BaseModel;
+import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountEntity extends BaseModel {
+public class AccountEntity extends TenantScopedBaseModel {
 
     // External safe identifier
     @Column(name = "public_id", nullable = false, updatable = false, length = 36)

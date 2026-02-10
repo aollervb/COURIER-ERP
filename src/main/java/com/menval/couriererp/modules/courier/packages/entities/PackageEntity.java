@@ -1,6 +1,6 @@
 package com.menval.couriererp.modules.courier.packages.entities;
 
-import com.menval.couriererp.modules.common.models.BaseModel;
+import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import com.menval.couriererp.modules.courier.account.entities.AccountEntity;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -20,7 +20,7 @@ import java.time.Instant;
         }
 )
 @Data
-public class PackageEntity extends BaseModel {
+public class PackageEntity extends TenantScopedBaseModel {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Carrier carrier = Carrier.UNKNOWN;

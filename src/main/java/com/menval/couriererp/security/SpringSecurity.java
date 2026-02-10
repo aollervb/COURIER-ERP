@@ -4,6 +4,7 @@ import com.menval.couriererp.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SpringSecurity {
 
@@ -34,6 +36,7 @@ public class SpringSecurity {
                                             "/error",
                                             "/api/public/**"
                                     ).permitAll()
+                                    .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                                     .anyRequest()
                                     .authenticated();
                         }
@@ -53,8 +56,10 @@ public class SpringSecurity {
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout")
                         .logoutSuccessUrl("/auth/login?logout=true")
+                )
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/integration/**", "/api/public/**")
                 );
-
 
         return http.build();
     }

@@ -1,7 +1,7 @@
 package com.menval.couriererp.modules.courier.packages.entities;
 
 import com.menval.couriererp.auth.models.BaseUser;
-import com.menval.couriererp.modules.common.models.BaseModel;
+import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,7 +15,7 @@ import java.time.Instant;
         }
 )
 @Data
-public class PackageEventEntity extends BaseModel {
+public class PackageEventEntity extends TenantScopedBaseModel {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "package_id", nullable = false)
