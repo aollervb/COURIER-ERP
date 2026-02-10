@@ -24,3 +24,28 @@
 ### 4. Batching for transport
 
 - Work on batching packages to prepare them for transport (use/expand `PackageBatchEntity` and related flows).
+
+---
+
+## Tomorrow / next
+
+### 5. Assign unassigned packages to customers + labels
+
+- Assign all packages that are in “received, unassigned” to customers (accounts).
+- When a package is assigned to a customer, create a **label** that can be printed and pasted onto the package (label entity/data, print-ready view or PDF).
+
+### 6. Create package batches
+
+- Create package batches (use/expand `PackageBatchEntity`) to group packages for transport.
+
+### 7. Create manifest from package batches
+
+- Generate a **manifest** from one or more package batches (e.g. list of packages in the batch for the carrier or last warehouse).
+
+### 8. Receive packages in last warehouse
+
+- Flow to **receive** packages when they arrive at the last warehouse (confirm arrival, update status).
+
+### 9. Dispatch packages to customers
+
+- Flow to **dispatch** packages to customers (mark as out for delivery / delivered, or hand off to carrier).

@@ -20,11 +20,22 @@
     <p>You have been logged out.</p>
 </div>
 
-<!-- Form must POST to the same URL as SpringSecurity.LOGIN_PROCESSING_URL (/auth/login-process). No controller for this path - Security filter handles it. -->
+<!-- Form must POST to /auth/login-process. Tenant is read from the "tenant" field and sets the scope for login. -->
 <form th:action="@{/auth/login-process}" method="post">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-    <input name="username" />
-    <input name="password" type="password" />
+    <div>
+        <label for="tenant">Tenant ID</label>
+        <input id="tenant" name="tenant" type="text" required placeholder="e.g. jetpack or system" />
+        <p class="hint">Your tenant identifier (e.g. <code>jetpack</code>). Use <code>system</code> for platform admin.</p>
+    </div>
+    <div>
+        <label for="username">Email</label>
+        <input id="username" name="username" type="email" required />
+    </div>
+    <div>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required />
+    </div>
     <button type="submit">Login</button>
 </form>
 

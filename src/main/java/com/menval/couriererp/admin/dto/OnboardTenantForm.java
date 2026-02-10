@@ -17,7 +17,9 @@ public class OnboardTenantForm {
     @Size(max = 200)
     private String companyName;
 
+    @NotBlank(message = "Client subdomain is required (e.g. jetpack.myerp.com)")
     @Size(max = 100)
+    @Pattern(regexp = "^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$", message = "Must be a valid hostname (e.g. jetpack.myerp.com)")
     private String domain;
 
     @NotBlank(message = "Primary contact name is required")

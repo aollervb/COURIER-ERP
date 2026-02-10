@@ -7,14 +7,17 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Spring profile inside container
+      # Spring profile → loads application-docker.yml (datasource, JPA). application.properties is always loaded too.
       SPRING_PROFILES_ACTIVE: docker
 
-      # If you use Postgres, keep these (or remove if not needed)
+      # Postgres (db service)
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/app
       SPRING_DATASOURCE_USERNAME: app
       SPRING_DATASOURCE_PASSWORD: app
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      # Optional: first super-admin password when none exists (default in code: changeme)
+      # COURIER_SUPERADMIN_INITIAL_PASSWORD: changeme
 
       # Optional JVM flags
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0"
@@ -33,7 +36,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata-3:/var/lib/postgresql/data
+      - pgdata-4:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U app -d app" ]
       interval: 5s
@@ -41,4 +44,4 @@ services:
       retries: 20
     restart: unless-stopped
 volumes:
-  pgdata-3:
+  pgdata-4:

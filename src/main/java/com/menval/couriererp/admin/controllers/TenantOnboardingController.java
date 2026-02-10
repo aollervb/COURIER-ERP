@@ -57,7 +57,7 @@ public class TenantOnboardingController {
         CreateTenantCommand command = new CreateTenantCommand(
                 form.getTenantId().trim().toLowerCase(),
                 form.getCompanyName().trim(),
-                form.getDomain() != null ? form.getDomain().trim() : null,
+                form.getDomain() != null ? form.getDomain().trim().toLowerCase() : null,
                 form.getPrimaryContactName().trim(),
                 form.getPrimaryContactEmail().trim(),
                 form.getPrimaryContactPhone() != null ? form.getPrimaryContactPhone().trim() : null,

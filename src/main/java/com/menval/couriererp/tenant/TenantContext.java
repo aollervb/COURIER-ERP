@@ -2,7 +2,7 @@ package com.menval.couriererp.tenant;
 
 /**
  * Holds the current tenant identifier for the request (or thread).
- * Set by {@link TenantContextFilter} from the request (e.g. X-Tenant-ID header)
+ * Set by {@link TenantContextFilter} from the login form "tenant" field (or by {@link com.menval.couriererp.security.ApiKeyAuthenticationFilter} for API)
  * and read by {@link TenantIdentifierResolver} for Hibernate's multi-tenancy.
  */
 public final class TenantContext {

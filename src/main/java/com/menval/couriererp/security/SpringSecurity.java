@@ -65,8 +65,9 @@ public class SpringSecurity {
                         .logoutUrl("/auth/logout")
                         .logoutSuccessUrl("/auth/login?logout=true")
                 )
+                // Login/logout: no CSRF so they work when session isn't established or for simple logout link
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**")
+                        .ignoringRequestMatchers("/api/**", LOGIN_PROCESSING_URL, "/auth/logout")
                 );
 
         return http.build();

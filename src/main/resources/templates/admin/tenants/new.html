@@ -30,8 +30,9 @@
         </div>
 
         <div>
-            <label for="domain">Domain (optional)</label>
-            <input id="domain" type="text" th:field="*{domain}" maxlength="100" placeholder="e.g. acme.com"/>
+            <label for="domain">Client subdomain (their ERP URL)</label>
+            <input id="domain" type="text" th:field="*{domain}" maxlength="100" placeholder="e.g. jetpack.myerp.com" required/>
+            <p class="hint">Full subdomain the client will use. Ensure DNS <code>*.myerp.com</code> points to this app.</p>
             <div th:if="${#fields.hasErrors('domain')}" th:errors="*{domain}"></div>
         </div>
 
