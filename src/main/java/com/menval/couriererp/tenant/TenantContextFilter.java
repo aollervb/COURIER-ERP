@@ -28,8 +28,12 @@ public class TenantContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            String tenantId = request.getHeader(TENANT_HEADER);
-            TenantContext.setTenantId(tenantId);
+            String path = request.getRequestURI();
+            // API paths use API key auth; tenant is set by ApiKeyAuthenticationFilter, not from header
+            if (!path.startsWith("/api/public/") && !path.startsWith("/api/integration/")) {
+                String tenantId = request.getHeader(TENANT_HEADER);
+                TenantContext.setTenantId(tenantId);
+            }
             filterChain.doFilter(request, response);
         } finally {
             TenantContext.clear();

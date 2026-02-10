@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -22,6 +23,8 @@ public class SpringSecurity {
 
     /** URL the login form must POST to. There is no controller for this path — the Security filter handles it. */
     public static final String LOGIN_PROCESSING_URL = "/auth/login-process";
+
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,14 +36,15 @@ public class SpringSecurity {
                                             "/auth/signup",
                                             "/auth/signup/**",
                                             "/css/**", "/js/**", "/images/**",
-                                            "/error",
-                                            "/api/public/**"
+                                            "/error"
                                     ).permitAll()
+                                    .requestMatchers("/api/public/**", "/api/integration/**").authenticated()
                                     .requestMatchers("/api/admin/**", "/admin/**").hasRole("SUPER_ADMIN")
                                     .anyRequest()
                                     .authenticated();
                         }
                 )
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )

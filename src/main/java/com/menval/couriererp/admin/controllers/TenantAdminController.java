@@ -1,9 +1,12 @@
 package com.menval.couriererp.admin.controllers;
 
+import com.menval.couriererp.admin.dto.CreateApiKeyRequest;
+import com.menval.couriererp.admin.dto.CreateApiKeyResponse;
 import com.menval.couriererp.admin.dto.CreateTenantRequest;
 import com.menval.couriererp.admin.dto.SuspendRequest;
 import com.menval.couriererp.admin.dto.TenantResponse;
 import com.menval.couriererp.tenant.entities.TenantEntity;
+import com.menval.couriererp.tenant.services.ApiKeyService;
 import com.menval.couriererp.tenant.services.CreateTenantCommand;
 import com.menval.couriererp.tenant.services.TenantService;
 import jakarta.validation.Valid;
@@ -23,9 +26,11 @@ import java.time.temporal.ChronoUnit;
 public class TenantAdminController {
 
     private final TenantService tenantService;
+    private final ApiKeyService apiKeyService;
 
-    public TenantAdminController(TenantService tenantService) {
+    public TenantAdminController(TenantService tenantService, ApiKeyService apiKeyService) {
         this.tenantService = tenantService;
+        this.apiKeyService = apiKeyService;
     }
 
     @PostMapping
@@ -65,6 +70,19 @@ public class TenantAdminController {
     @PostMapping("/{tenantId}/activate")
     public void activateTenant(@PathVariable String tenantId) {
         tenantService.activateTenant(tenantId);
+    }
+
+    /**
+     * Create an API key for the tenant. The raw key is returned only once.
+     * Use X-API-Key or Authorization: Bearer &lt;key&gt; for /api/public/** and /api/integration/**.
+     */
+    @PostMapping("/{tenantId}/api-keys")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CreateApiKeyResponse createApiKey(@PathVariable String tenantId,
+                                             @RequestBody(required = false) CreateApiKeyRequest request) {
+        String name = request != null && request.name() != null ? request.name() : "API key";
+        String rawKey = apiKeyService.createApiKey(tenantId, name);
+        return new CreateApiKeyResponse(rawKey);
     }
 
     private static TenantResponse toResponse(TenantEntity tenant) {
