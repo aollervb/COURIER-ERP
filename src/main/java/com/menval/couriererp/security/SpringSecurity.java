@@ -36,7 +36,7 @@ public class SpringSecurity {
                                             "/error",
                                             "/api/public/**"
                                     ).permitAll()
-                                    .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+                                    .requestMatchers("/api/admin/**", "/admin/**").hasRole("SUPER_ADMIN")
                                     .anyRequest()
                                     .authenticated();
                         }
