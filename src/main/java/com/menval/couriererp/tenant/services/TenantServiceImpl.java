@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class TenantServiceImpl implements TenantService {
@@ -54,6 +55,13 @@ public class TenantServiceImpl implements TenantService {
                 .build();
 
         return tenantRepository.save(tenant);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public List<TenantEntity> listAllTenants() {
+        return tenantRepository.findAll();
     }
 
     @Override

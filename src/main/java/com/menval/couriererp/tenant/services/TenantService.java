@@ -4,6 +4,7 @@ import com.menval.couriererp.tenant.entities.TenantEntity;
 import com.menval.couriererp.tenant.entities.TenantSettings;
 
 import java.time.Instant;
+import java.util.List;
 
 public interface TenantService {
 
@@ -11,6 +12,8 @@ public interface TenantService {
      * Create a new tenant. Only callable by SUPER_ADMIN users.
      */
     TenantEntity createTenant(CreateTenantCommand command);
+
+    List<TenantEntity> listAllTenants();
 
     TenantEntity getTenantById(String tenantId);
 

@@ -12,9 +12,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * No REST API uses username/password; only ERP views do (form login, session).
+ * REST: /api/public/**, /api/integration/** — API key only (X-API-Key or Bearer).
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -38,8 +45,9 @@ public class SpringSecurity {
                                             "/css/**", "/js/**", "/images/**",
                                             "/error"
                                     ).permitAll()
-                                    .requestMatchers("/api/public/**", "/api/integration/**").authenticated()
-                                    .requestMatchers("/api/admin/**", "/admin/**").hasRole("SUPER_ADMIN")
+                                    .requestMatchers("/api/public/**", "/api/integration/**").access(apiKeyOnly())
+                                    .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
+                                    .requestMatchers("/settings/**").hasAnyRole("DIRECTOR", "ADMIN")
                                     .anyRequest()
                                     .authenticated();
                         }
@@ -66,6 +74,15 @@ public class SpringSecurity {
                 );
 
         return http.build();
+    }
+
+    private static AuthorizationManager<RequestAuthorizationContext> apiKeyOnly() {
+        return (authenticationSupplier, context) -> {
+            var auth = authenticationSupplier.get();
+            return new AuthorizationDecision(
+                    auth != null && auth.isAuthenticated() && auth instanceof ApiKeyAuthenticationFilter.ApiKeyAuthenticationToken
+            );
+        };
     }
 
     @Bean

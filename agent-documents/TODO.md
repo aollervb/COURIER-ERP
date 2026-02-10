@@ -4,7 +4,7 @@
 
 - ~~**Stop trusting `X-Tenant-ID` header** – Any client can send any tenant and see that tenant’s data.~~ (For authenticated requests, tenant now comes from user; header only used for login/signup.)
 - ~~**Set tenant from authenticated user** – In the tenant filter, read tenant from `SecurityContext` (e.g. `BaseUser`’s tenant), not from the request header.~~ (`TenantAccessFilter` sets tenant from `BaseUser.getUserTenantId()`.)
-- **API integrations** – For `/api/integration/**` and `/api/public/**`, derive tenant from a validated API key (or similar), not from a client-provided header. *(Optional; still using X-Tenant-ID for now.)*
+- ~~**API integrations** – For `/api/integration/**` and `/api/public/**`, derive tenant from a validated API key.~~ ✅ Done. API key auth via X-API-Key or Authorization: Bearer. SUPER_ADMIN can create keys for any tenant (POST /api/admin/tenants/{tenantId}/api-keys); DIRECTOR and ADMIN can create keys for their own tenant (POST /api/tenant/api-keys).
 - ~~Optionally expose tenant on `BaseUser` (e.g. `getUserTenantId()`) and use it in the filter.~~ (`BaseUser.getUserTenantId()`, `isSuperAdmin()`, `isTenantAdmin()` added.)
 
 ### 1. Redirect after receiving + “received, unassigned” page

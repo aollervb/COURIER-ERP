@@ -51,8 +51,8 @@ public class TenantAccessFilter extends OncePerRequestFilter {
             try {
                 String tenantId = baseUser.getUserTenantId();
 
-                // SUPER_ADMIN on admin endpoints can use "system" tenant (no TenantEntity required)
-                if (baseUser.isSuperAdmin() && path.startsWith("/api/admin/")) {
+                // SUPER_ADMIN on admin views use "system" tenant (no TenantEntity required)
+                if (baseUser.isSuperAdmin() && path.startsWith("/admin/")) {
                     TenantContext.setTenantId("system");
                     filterChain.doFilter(request, response);
                     return;
