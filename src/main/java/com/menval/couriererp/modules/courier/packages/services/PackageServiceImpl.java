@@ -1,5 +1,7 @@
 package com.menval.couriererp.modules.courier.packages.services;
 
+import com.menval.couriererp.modules.courier.account.entities.AccountEntity;
+import com.menval.couriererp.modules.courier.account.services.AccountService;
 import com.menval.couriererp.modules.courier.packages.entities.Carrier;
 import com.menval.couriererp.modules.courier.packages.entities.PackageEntity;
 import com.menval.couriererp.modules.courier.packages.entities.PackageStatus;
@@ -19,9 +21,11 @@ import java.util.Optional;
 public class PackageServiceImpl implements PackageService {
 
     private final PackageRepository packageRepository;
+    private final AccountService accountService;
 
-    public PackageServiceImpl(PackageRepository packageRepository) {
+    public PackageServiceImpl(PackageRepository packageRepository, AccountService accountService) {
         this.packageRepository = packageRepository;
+        this.accountService = accountService;
     }
 
     @Override
@@ -40,13 +44,7 @@ public class PackageServiceImpl implements PackageService {
 
     private PackageEntity saveNewPackage(Carrier carrier, String tracking) {
         Instant now = Instant.now();
-        PackageEntity pkg = new PackageEntity();
-        pkg.setCarrier(carrier);
-        pkg.setOriginalTrackingNumber(tracking);
-        pkg.setOwner(null);
-        pkg.setStatus(PackageStatus.RECEIVED_US_UNASSIGNED);
-        pkg.setReceivedAt(now);
-        pkg.setLastSeenAt(now);
+        PackageEntity pkg = PackageEntity.receive(carrier, tracking, now);
         try {
             return packageRepository.save(pkg);
         } catch (DataIntegrityViolationException e) {
@@ -109,6 +107,16 @@ public class PackageServiceImpl implements PackageService {
     @Transactional(readOnly = true)
     public Page<PackageEntity> findByStatus(PackageStatus status, Pageable pageable) {
         return packageRepository.findByStatus(status, pageable);
+    }
+
+    @Override
+    @Transactional
+    public PackageEntity assignPackageToAccount(Long packageId, String accountCode) {
+        PackageEntity pkg = packageRepository.findById(packageId)
+                .orElseThrow(() -> new IllegalArgumentException("Package not found: " + packageId));
+        AccountEntity account = accountService.getByCode(accountCode);
+        pkg.assignToAccount(account);
+        return packageRepository.save(pkg);
     }
 
     private static String normalizeTracking(String raw) {

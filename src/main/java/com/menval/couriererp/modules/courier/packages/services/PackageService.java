@@ -32,4 +32,13 @@ public interface PackageService {
      * List packages by status (e.g. RECEIVED_US_UNASSIGNED for warehouse view).
      */
     Page<PackageEntity> findByStatus(com.menval.couriererp.modules.courier.packages.entities.PackageStatus status, Pageable pageable);
+
+    /**
+     * Assign a package to an account (customer). Delegates to {@link PackageEntity#assignToAccount}.
+     *
+     * @param packageId  package to assign
+     * @param accountCode account code (e.g. CR-7K2P9D)
+     * @return the updated package
+     */
+    PackageEntity assignPackageToAccount(Long packageId, String accountCode);
 }

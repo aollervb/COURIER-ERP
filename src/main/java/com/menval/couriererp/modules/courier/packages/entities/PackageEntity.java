@@ -62,6 +62,26 @@ public class PackageEntity extends TenantScopedBaseModel {
      private String receivingBatchCode;
      */
 
+    /**
+     * Create a new package in received state (no owner, RECEIVED_US_UNASSIGNED).
+     * Use this instead of setters when receiving a package in the domain.
+     */
+    public static PackageEntity receive(Carrier carrier, String originalTrackingNumber, Instant receivedAt) {
+        if (carrier == null) carrier = Carrier.UNKNOWN;
+        if (originalTrackingNumber == null || originalTrackingNumber.isBlank()) {
+            throw new IllegalArgumentException("Tracking number is required");
+        }
+        String tracking = originalTrackingNumber.trim();
+        PackageEntity pkg = new PackageEntity();
+        pkg.setCarrier(carrier);
+        pkg.setOriginalTrackingNumber(tracking);
+        pkg.setOwner(null);
+        pkg.setStatus(PackageStatus.RECEIVED_US_UNASSIGNED);
+        pkg.setReceivedAt(receivedAt);
+        pkg.setLastSeenAt(receivedAt);
+        return pkg;
+    }
+
     public void markReceivedNow(Instant now) {
         if (this.receivedAt == null) this.receivedAt = now;
         this.lastSeenAt = now;
@@ -69,5 +89,37 @@ public class PackageEntity extends TenantScopedBaseModel {
 
     public boolean isAssigned() {
         return owner != null;
+    }
+
+    /**
+     * Whether this package can be assigned to an account (received, not yet assigned).
+     */
+    public boolean canBeAssigned() {
+        return !isAssigned() && status == PackageStatus.RECEIVED_US_UNASSIGNED;
+    }
+
+    /**
+     * Assign this package to a customer account. Domain logic: validates account and package state,
+     * sets owner and status RECEIVED_US_ASSIGNED.
+     *
+     * @param account the customer account to assign (must be active and not null)
+     * @throws IllegalArgumentException if account is null, inactive, or package is already assigned
+     */
+    public void assignToAccount(AccountEntity account) {
+        if (account == null) {
+            throw new IllegalArgumentException("Account is required to assign a package");
+        }
+        if (!account.isActive()) {
+            throw new IllegalArgumentException("Cannot assign package to inactive account: " + account.getCode());
+        }
+        if (isAssigned()) {
+            throw new IllegalStateException("Package is already assigned to account: " + owner.getCode());
+        }
+        if (!canBeAssigned()) {
+            throw new IllegalStateException("Package cannot be assigned: status is " + status);
+        }
+        this.owner = account;
+        this.status = PackageStatus.RECEIVED_US_ASSIGNED;
+        this.lastSeenAt = Instant.now();
     }
 }
