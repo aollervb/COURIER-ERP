@@ -18,13 +18,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * No REST API uses username/password; only ERP views do (form login, session).
- * REST: /api/public/**, /api/integration/** — API key only (X-API-Key or Bearer).
- */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity()
 @RequiredArgsConstructor
 public class SpringSecurity {
 
@@ -45,7 +41,7 @@ public class SpringSecurity {
                                             "/css/**", "/js/**", "/images/**",
                                             "/error"
                                     ).permitAll()
-                                    .requestMatchers("/api/public/**", "/api/integration/**").access(apiKeyOnly())
+                                    .requestMatchers("/api/**").access(apiKeyOnly())
                                     .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
                                     .requestMatchers("/settings/**").hasAnyRole("DIRECTOR", "ADMIN")
                                     .anyRequest()
@@ -70,7 +66,7 @@ public class SpringSecurity {
                         .logoutSuccessUrl("/auth/login?logout=true")
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/integration/**", "/api/public/**")
+                        .ignoringRequestMatchers("/api/**")
                 );
 
         return http.build();
@@ -96,3 +92,5 @@ public class SpringSecurity {
         return new BCryptPasswordEncoder();
     }
 }
+
+

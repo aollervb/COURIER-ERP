@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Create API key – Admin</title>
+</head>
+<body>
+
+<h1>Create API key</h1>
+<p th:text="'Tenant: ' + ${tenant.companyName} + ' (' + ${tenant.tenantId} + ')'">Tenant</p>
+
+<p th:if="${message}" th:text="${message}" style="color: green;"></p>
+
+<div th:if="${newApiKey}" style="margin: 1em 0; padding: 1em; background: #f0f0f0; border: 1px solid #ccc;">
+    <p><strong>New API key (copy and store securely; it won’t be shown again):</strong></p>
+    <code th:text="${newApiKey}" style="word-break: break-all;">ce_xxx</code>
+</div>
+
+<form th:action="@{/admin/tenants/{id}/api-keys(id=${tenant.tenantId})}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <div>
+        <label for="name">Name (optional)</label>
+        <input id="name" type="text" name="name" th:value="${name}" maxlength="120" placeholder="e.g. Portal"/>
+    </div>
+    <button type="submit">Create API key</button>
+</form>
+
+<p><a th:href="@{/admin/tenants/{id}(id=${tenant.tenantId})}">Back to tenant</a></p>
+<p><a th:href="@{/admin/tenants}">Back to tenant list</a></p>
+
+</body>
+</html>

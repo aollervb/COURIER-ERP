@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Create tenant – Admin</title>
+</head>
+<body>
+
+<h1>Create tenant and first admin</h1>
+
+<p th:if="${message}" th:text="${message}" style="color: green;"></p>
+
+<form th:action="@{/admin/tenants}" th:object="${form}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <fieldset>
+        <legend>Tenant</legend>
+
+        <div>
+            <label for="tenantId">Tenant ID (lowercase, numbers, hyphens)</label>
+            <input id="tenantId" type="text" th:field="*{tenantId}" required maxlength="64" placeholder="e.g. acme-corp"/>
+            <div th:if="${#fields.hasErrors('tenantId')}" th:errors="*{tenantId}"></div>
+        </div>
+
+        <div>
+            <label for="companyName">Company name</label>
+            <input id="companyName" type="text" th:field="*{companyName}" required maxlength="200"/>
+            <div th:if="${#fields.hasErrors('companyName')}" th:errors="*{companyName}"></div>
+        </div>
+
+        <div>
+            <label for="domain">Domain (optional)</label>
+            <input id="domain" type="text" th:field="*{domain}" maxlength="100" placeholder="e.g. acme.com"/>
+            <div th:if="${#fields.hasErrors('domain')}" th:errors="*{domain}"></div>
+        </div>
+
+        <div>
+            <label for="primaryContactName">Primary contact name</label>
+            <input id="primaryContactName" type="text" th:field="*{primaryContactName}" required maxlength="200"/>
+            <div th:if="${#fields.hasErrors('primaryContactName')}" th:errors="*{primaryContactName}"></div>
+        </div>
+
+        <div>
+            <label for="primaryContactEmail">Primary contact email</label>
+            <input id="primaryContactEmail" type="email" th:field="*{primaryContactEmail}" required maxlength="320"/>
+            <div th:if="${#fields.hasErrors('primaryContactEmail')}" th:errors="*{primaryContactEmail}"></div>
+        </div>
+
+        <div>
+            <label for="primaryContactPhone">Primary contact phone (optional)</label>
+            <input id="primaryContactPhone" type="text" th:field="*{primaryContactPhone}" maxlength="30" placeholder="+1 234 567 8900"/>
+            <div th:if="${#fields.hasErrors('primaryContactPhone')}" th:errors="*{primaryContactPhone}"></div>
+        </div>
+
+        <div>
+            <label for="plan">Plan</label>
+            <select id="plan" th:field="*{plan}" required>
+                <option value="">-- Select plan --</option>
+                <option th:each="plan : ${plans}" th:value="${plan}" th:text="${plan}"></option>
+            </select>
+            <div th:if="${#fields.hasErrors('plan')}" th:errors="*{plan}"></div>
+        </div>
+
+        <div>
+            <label for="subscriptionMonths">Subscription months</label>
+            <input id="subscriptionMonths" type="number" th:field="*{subscriptionMonths}" min="1" max="36"/>
+            <div th:if="${#fields.hasErrors('subscriptionMonths')}" th:errors="*{subscriptionMonths}"></div>
+        </div>
+
+        <div>
+            <label for="accountCodePrefix">Account code prefix (optional, 2–4 uppercase letters)</label>
+            <input id="accountCodePrefix" type="text" th:field="*{accountCodePrefix}" maxlength="4" placeholder="e.g. ACM"/>
+            <div th:if="${#fields.hasErrors('accountCodePrefix')}" th:errors="*{accountCodePrefix}"></div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>First admin user (tenant admin)</legend>
+
+        <div>
+            <label for="adminEmail">Admin email</label>
+            <input id="adminEmail" type="email" th:field="*{adminEmail}" required maxlength="320"/>
+            <div th:if="${#fields.hasErrors('adminEmail')}" th:errors="*{adminEmail}"></div>
+        </div>
+
+        <div>
+            <label for="adminFirstName">Admin first name</label>
+            <input id="adminFirstName" type="text" th:field="*{adminFirstName}" required maxlength="120"/>
+            <div th:if="${#fields.hasErrors('adminFirstName')}" th:errors="*{adminFirstName}"></div>
+        </div>
+
+        <div>
+            <label for="adminLastName">Admin last name</label>
+            <input id="adminLastName" type="text" th:field="*{adminLastName}" required maxlength="120"/>
+            <div th:if="${#fields.hasErrors('adminLastName')}" th:errors="*{adminLastName}"></div>
+        </div>
+
+        <div>
+            <label for="adminPassword">Password (min 8 characters)</label>
+            <input id="adminPassword" type="password" th:field="*{adminPassword}" required minlength="8"/>
+            <div th:if="${#fields.hasErrors('adminPassword')}" th:errors="*{adminPassword}"></div>
+        </div>
+
+        <div>
+            <label for="adminConfirmPassword">Confirm password</label>
+            <input id="adminConfirmPassword" type="password" th:field="*{adminConfirmPassword}" required/>
+            <div th:if="${#fields.hasErrors('adminConfirmPassword')}" th:errors="*{adminConfirmPassword}"></div>
+        </div>
+    </fieldset>
+
+    <p>
+        <button type="submit">Create tenant and admin user</button>
+    </p>
+</form>
+
+<p><a th:href="@{/}">Back to home</a></p>
+
+</body>
+</html>

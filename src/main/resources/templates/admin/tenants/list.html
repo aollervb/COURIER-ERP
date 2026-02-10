@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Tenants – Admin</title>
+</head>
+<body>
+
+<h1>Tenants</h1>
+
+<p><a th:href="@{/admin/tenants/new}">Create tenant</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Tenant ID</th>
+            <th>Company</th>
+            <th>Status</th>
+            <th>Plan</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="t : ${tenants}">
+            <td><a th:href="@{/admin/tenants/{id}(id=${t.tenantId})}" th:text="${t.tenantId}">tenant-id</a></td>
+            <td th:text="${t.companyName}">company</td>
+            <td th:text="${t.status}">status</td>
+            <td th:text="${t.plan}">plan</td>
+            <td><a th:href="@{/admin/tenants/{id}(id=${t.tenantId})}">View</a></td>
+        </tr>
+    </tbody>
+</table>
+
+<p><a th:href="@{/}">Back to home</a></p>
+
+</body>
+</html>

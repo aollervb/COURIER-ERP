@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${tenant.tenantId} + ' – Admin'">Tenant – Admin</title>
+</head>
+<body>
+
+<h1 th:text="${tenant.companyName}">Company</h1>
+<p th:text="'Tenant ID: ' + ${tenant.tenantId}">Tenant ID</p>
+
+<p th:if="${message}" th:text="${message}" style="color: green;"></p>
+
+<p><strong>Status:</strong> <span th:text="${tenant.status}">status</span> |
+    <strong>Active:</strong> <span th:text="${tenant.active}">active</span> |
+    <strong>Plan:</strong> <span th:text="${tenant.plan}">plan</span></p>
+<p><strong>Contact:</strong> <span th:text="${tenant.primaryContactName}">name</span> &lt;<span th:text="${tenant.primaryContactEmail}">email</span>&gt;</p>
+<p th:if="${tenant.domain}"><strong>Domain:</strong> <span th:text="${tenant.domain}">domain</span></p>
+
+<h2>Actions</h2>
+
+<div th:if="${tenant.active}">
+    <form th:action="@{/admin/tenants/{id}/suspend(id=${tenant.tenantId})}" method="post" style="display: inline;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <label>Reason (optional): <input type="text" name="reason" maxlength="500"/></label>
+        <button type="submit">Suspend tenant</button>
+    </form>
+</div>
+<div th:unless="${tenant.active}">
+    <form th:action="@{/admin/tenants/{id}/activate(id=${tenant.tenantId})}" method="post" style="display: inline;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <button type="submit">Activate tenant</button>
+    </form>
+</div>
+
+<p><a th:href="@{/admin/tenants/{id}/api-keys/new(id=${tenant.tenantId})}">Create API key for this tenant</a></p>
+
+<p><a th:href="@{/admin/tenants}">Back to tenant list</a></p>
+<p><a th:href="@{/}">Back to home</a></p>
+
+</body>
+</html>
