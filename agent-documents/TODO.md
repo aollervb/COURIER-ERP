@@ -1,51 +1,165 @@
-## Courier ERP – Development plan
-
-### ~~0. Tenant-from-auth (security) – do first~~ ✅ Done
-
-- ~~**Stop trusting `X-Tenant-ID` header** – Any client can send any tenant and see that tenant’s data.~~ (For authenticated requests, tenant now comes from user; header only used for login/signup.)
-- ~~**Set tenant from authenticated user** – In the tenant filter, read tenant from `SecurityContext` (e.g. `BaseUser`’s tenant), not from the request header.~~ (`TenantAccessFilter` sets tenant from `BaseUser.getUserTenantId()`.)
-- ~~**API integrations** – For `/api/integration/**` and `/api/public/**`, derive tenant from a validated API key.~~ ✅ Done. API key auth via X-API-Key or Authorization: Bearer. SUPER_ADMIN can create keys for any tenant (POST /api/admin/tenants/{tenantId}/api-keys); DIRECTOR and ADMIN can create keys for their own tenant (POST /api/tenant/api-keys).
-- ~~Optionally expose tenant on `BaseUser` (e.g. `getUserTenantId()`) and use it in the filter.~~ (`BaseUser.getUserTenantId()`, `isSuperAdmin()`, `isTenantAdmin()` added.)
-
-### 1. Redirect after receiving + “received, unassigned” page
-
-- When all packages are received (batch submit), redirect to a new page.
-- That page shows all packages that are received and not assigned to a customer.
-
-### 2. Auto-assign from inbound notice
-
-- If a customer sent an inbound notice with the same tracking number (and carrier) as a package we’ve received, auto-assign that package to that customer.
-
-### 3. Assign package to an account
-
-- Manual flow: assign a package to an account (customer) from the ERP UI.
-- Later: move assignment logic into the domain (e.g. `PackageEntity.assignToAccount(...)`).
-
-### 4. Batching for transport
-
-- Work on batching packages to prepare them for transport (use/expand `PackageBatchEntity` and related flows).
+# Courier ERP – Development TODO
+*Last updated: February 11, 2026*
 
 ---
 
-## Tomorrow / next
+## ✅ Done
 
-### 5. Assign unassigned packages to customers + labels
+- ~~Tenant isolation via `X-Tenant-ID` header~~ → tenant now set from authenticated `BaseUser` or validated API key
+- ~~API key authentication~~ → `ApiKeyAuthenticationFilter`, SHA-256 hashed storage, `ApiKeyService` complete
+- ~~Tenant lifecycle~~ → suspend, activate, expire, plan limits wired up
+- ~~`PackageEntity.assignToAccount()`~~ → domain method with pre-condition validation
 
-- Assign all packages that are in “received, unassigned” to customers (accounts).
-- When a package is assigned to a customer, create a **label** that can be printed and pasted onto the package (label entity/data, print-ready view or PDF).
+---
 
-### 6. Create package batches
+## 🚨 IMMEDIATE — Fix before next feature
 
-- Create package batches (use/expand `PackageBatchEntity`) to group packages for transport.
+### 1. Remove public signup page
+**Why:** `/auth/signup` is publicly accessible and creates a `DIRECTOR`-role user with no tenant — dead UX at best, confusion vector at worst.
+**Decision:** Tenant onboarding (super-admin) is the only entry point for new users. Remove or `@Deprecated`-gate the signup controller and Thymeleaf template.
+- [ ] Delete or disable `AuthController.signup()` and `POST /auth/signup`
+- [ ] Remove `signup.html` template (or keep as reference, commented out)
+- [ ] Remove `AuthService.signUp()` or make it package-private/internal-only
 
-### 7. Create manifest from package batches
+### 2. Fix `TenantBootstrap` expiry on system/default tenants
+**Why:** Both `system` and `default` tenants are created with `subscriptionExpiresAt = Instant.now().plus(365 days)`. In 365 days `isExpired()` returns `true`, locking the super-admin out of the platform.
+**Decision:** System and default tenants never expire.
+- [ ] Set `subscriptionExpiresAt = null` in `TenantBootstrap` for both `system` and `default` tenants
+- [ ] Add a comment to `TenantEntity.isExpired()` noting that `null` means "never expires" (it already handles null safely — just document it)
 
-- Generate a **manifest** from one or more package batches (e.g. list of packages in the batch for the carrier or last warehouse).
+### 3. Fix `ApiKeyAuthenticationFilter` — ensure tenant is never loaded into context from a non-tenant-scoped lookup
+**Why:** `ApiKeyEntity` may extend `TenantScopedBaseModel` (or be loaded while a stale `TenantContext` is set), meaning the key lookup itself could silently filter by the wrong tenant.
+- [ ] Confirm `ApiKeyEntity` does NOT extend `TenantScopedBaseModel`
+- [ ] Confirm `ApiKeyRepository.findByKeyHash()` runs without any active tenant context (call `TenantContext.clear()` before the lookup if needed)
+- [ ] Add a test: validate that a key belonging to tenant B cannot be resolved when the context is set to tenant A
 
-### 8. Receive packages in last warehouse
+---
 
-- Flow to **receive** packages when they arrive at the last warehouse (confirm arrival, update status).
+## ⚠️ SHORT-TERM — This week
 
-### 9. Dispatch packages to customers
+### 4. User suspension & access control tied to tenant status
+**Why (your decision):** When a tenant's subscription lapses or the tenant is suspended, ALL users of that tenant must be blocked. Also, individual users can be suspended independently of the tenant.
+- [ ] Add `UserStatus` enum to `BaseUser`: `ACTIVE`, `SUSPENDED`, `BLOCKED` (or a boolean `suspended` field + reason)
+- [ ] Add `suspendedReason` (String) and `suspendedAt` (Instant) fields to `BaseUser`
+- [ ] Update `TenantAccessFilter` to also check `baseUser` status — if user is suspended/blocked, deny access regardless of tenant status
+- [ ] When `suspendTenant()` is called, propagate block to all users of that tenant (either eagerly update all users, or check tenant status in the user check — lazy approach is simpler)
+- [ ] Expose suspend/unsuspend user endpoints in the admin UI
+- [ ] Tenant admin (ADMIN role) should be able to suspend their own tenant's users, but not super-admin users
 
-- Flow to **dispatch** packages to customers (mark as out for delivery / delivered, or hand off to carrier).
+### 5. Store suspension reason on `TenantEntity`
+**Why:** When a tenant or user asks "why is my account suspended?", there's currently no stored reason.
+- [ ] Add `suspensionReason` (String, nullable) field to `TenantEntity`
+- [ ] Update `suspendTenant(String tenantId, String reason)` to persist the reason
+- [ ] Expose `suspensionReason` in the tenant detail view and in any error response shown to the user
+
+### 6. Admin creates first user during tenant onboarding — no other signup path
+**Why (your decision):** When a tenant is created, one admin account is created. That admin is responsible for creating all employee accounts. No self-service signup exists.
+- [ ] `TenantOnboardingController` already creates the first admin — confirm this is the only user creation path
+- [ ] Add UI for the tenant ADMIN to create/manage users within their tenant (name, email, role, password)
+- [ ] Ensure `createUserForTenant()` enforces that only `SUPER_ADMIN` or the tenant's own `ADMIN` can create users for that tenant
+- [ ] Add role validation: tenant admins cannot create `SUPER_ADMIN` users
+- [ ] Add user listing page for tenant ADMIN: `/settings/users`
+
+### 7. API key rotation and revocation
+**Why:** There is currently no way to delete/revoke an API key once created.
+- [ ] Add `DELETE /settings/api-keys/{id}` endpoint
+- [ ] Add revoke button to `settings/api-keys.html`
+- [ ] Add `expiresAt` (Instant, nullable) field to `ApiKeyEntity` — null means no expiry
+- [ ] Update `validateAndGetTenantId()` to reject keys where `expiresAt != null && now.isAfter(expiresAt)`
+- [ ] Add `lastUsedAt` (Instant) field to `ApiKeyEntity` and update it on each successful validation (useful for auditing unused keys)
+- [ ] Expose key name, created date, last used, and expiry in the settings UI
+
+---
+
+## 📋 MEDIUM-TERM — Next sprint
+
+### 8. Package domain events
+**Why:** `assignToAccount`, future dispatch/delivery events need audit trails, label generation triggers, and notification hooks. Without events, side-effects get tangled into service methods.
+- [ ] Define event classes: `PackageReceivedEvent`, `PackageAssignedEvent`, `PackageDispatchedEvent`, `PackageDeliveredEvent`
+- [ ] Inject `ApplicationEventPublisher` into `PackageServiceImpl` and publish after each state transition
+- [ ] Create `PackageEventEntity` listener that persists audit records (the entity already exists — wire it up)
+- [ ] Later: use events to trigger label generation on assignment
+
+### 9. Redirect after receiving + "received, unassigned" page
+*(carried from old TODO #1)*
+- [ ] After batch receive POST, redirect to `/packages/unassigned`
+- [ ] `/packages/unassigned` shows all `RECEIVED_US_UNASSIGNED` packages, paginated
+- [ ] Include quick-assign control on that page
+
+### 10. Auto-assign from inbound notice
+*(carried from old TODO #2)*
+- [ ] When a package is received with a tracking number that matches an existing `InboundNotice`, auto-assign to that notice's account
+- [ ] Add this check inside `PackageServiceImpl.receivePackage()` (or via a `PackageReceivedEvent` listener)
+- [ ] Surface auto-assign results in the batch receive response
+
+### 11. Manual assign package to account
+*(carried from old TODO #3)*
+- [ ] UI flow: select package → search/select account → confirm assignment
+- [ ] Call `PackageService.assignPackageToAccount(packageId, accountCode)`
+- [ ] Show success/error flash on redirect
+
+### 12. Sequential account code generation
+**Why:** `AccountCounterService` is a stub — all codes are random today. Sequential codes (e.g. `CR-000123`) are more operator-friendly.
+- [ ] Create `account_code_counters` table: `(tenant_id, prefix, last_value)`
+- [ ] Implement `AccountCounterService` with atomic `UPDATE ... RETURNING` or pessimistic lock
+- [ ] Update `AccountServiceImpl.generateCode()` to use the counter when `supports()` returns true
+- [ ] Add a `syncFromAccounts(prefix)` implementation to repair the counter if it drifts
+
+### 13. Labels for assigned packages
+*(carried from old TODO #5)*
+- [ ] Define label data model: what goes on a label (account code, package tracking, internal code, QR/barcode)
+- [ ] Create print-ready Thymeleaf view or PDF generation for labels
+- [ ] Trigger label creation on `PackageAssignedEvent`
+
+### 14. Package batches for transport
+*(carried from old TODO #4, #6)*
+- [ ] Flesh out `PackageBatchEntity` — status transitions, adding/removing packages
+- [ ] UI to create a batch and add assigned packages to it
+- [ ] Batch status flow: OPEN → SEALED → IN_TRANSIT → DELIVERED
+
+### 15. Manifest from package batch
+*(carried from old TODO #7)*
+- [ ] Generate a printable/exportable manifest from a sealed batch
+- [ ] Include: batch code, transport mode, package list with tracking numbers and account codes
+
+### 16. Receive packages at final warehouse
+*(carried from old TODO #8)*
+- [ ] Flow to mark packages as arrived at final warehouse
+- [ ] Update `PackageStatus` accordingly (new status needed: e.g. `RECEIVED_FINAL`)
+- [ ] Trigger via scan or manual entry
+
+### 17. Dispatch packages to customers
+*(carried from old TODO #9)*
+- [ ] Mark package as dispatched / out for delivery / delivered
+- [ ] Record dispatch timestamp and operator
+
+---
+
+## 🔮 FUTURE / INFRASTRUCTURE
+
+### 18. API completeness for external portal
+- [ ] `GET /api/public/packages` — list packages for a tenant (paginated, filterable by status)
+- [ ] `POST /api/integration/packages/receive` — receive a package via API
+- [ ] `POST /api/integration/packages/{id}/assign` — assign via API
+- [ ] Consistent API error envelope (currently only `ApiExceptionHandler` covers the integration controller)
+
+### 19. Test coverage
+**Currently: 1 smoke test. Target: meaningful coverage of critical paths.**
+- [ ] Tenant isolation test: query under tenant A must not return tenant B's data (`@DataJpaTest`)
+- [ ] `PackageEntity.assignToAccount()` unit tests: inactive account, already-assigned, happy path
+- [ ] `ApiKeyAuthenticationFilter` integration test: missing key → 401, invalid key → 401, valid key → 200 with correct tenant
+- [ ] `AccountServiceImpl.ensureAccount()` idempotency test: concurrent calls same `externalRef`
+- [ ] `TenantAccessFilter` test: suspended tenant → 403, expired tenant → 403
+
+### 20. Infrastructure hardening (when deploying to AWS)
+- [ ] Move all secrets to AWS Secrets Manager / Parameter Store (DB credentials, initial super-admin password)
+- [ ] Set `spring.jpa.hibernate.ddl-auto=validate` in production profile (never `update` or `create`)
+- [ ] Add `/actuator/health` endpoint (gated, not public) for load balancer health checks
+- [ ] Structured logging (JSON) for CloudWatch ingestion
+- [ ] Rate limiting on `/api/**` endpoints (per API key)
+
+---
+
+### TODOS Extras:
+- [ ] Azul
+- [ ] Agregar parametros al @TenantEntity para integracion con Azul
