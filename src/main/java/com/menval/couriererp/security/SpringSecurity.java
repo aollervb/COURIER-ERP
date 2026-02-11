@@ -36,8 +36,6 @@ public class SpringSecurity {
                             reqConfigurer
                                     .requestMatchers(
                                             "/auth/login",
-                                            "/auth/signup",
-                                            "/auth/signup/**",
                                             "/css/**", "/js/**", "/images/**",
                                             "/error"
                                     ).permitAll()

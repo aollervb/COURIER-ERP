@@ -68,6 +68,10 @@ public class TenantEntity extends BaseModel {
     @Column(length = 100)
     private String billingEmail;
 
+    /**
+     * Returns true if the tenant's subscription has expired.
+     * {@code subscriptionExpiresAt == null} means "never expires" (used for system and default tenants).
+     */
     public boolean isExpired() {
         return subscriptionExpiresAt != null && Instant.now().isAfter(subscriptionExpiresAt);
     }

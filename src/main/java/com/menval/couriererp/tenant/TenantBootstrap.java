@@ -8,7 +8,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 /**
  * Creates the "default" tenant if no tenants exist (e.g. first run).
@@ -18,7 +17,8 @@ import java.time.temporal.ChronoUnit;
 @Order(100)
 public class TenantBootstrap implements ApplicationRunner {
 
-    private static final String DEFAULT_TENANT_ID = "default";
+    /** Tenant ID used for the platform super-admin user (not a customer tenant). */
+    public static final String SYSTEM_TENANT_ID = "system";
 
     private final TenantRepository tenantRepository;
 
@@ -28,27 +28,6 @@ public class TenantBootstrap implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (tenantRepository.count() == 0) {
-            TenantSettings settings = new TenantSettings();
-            settings.setAccountCodePrefix("CR");
-            settings.setAccountCodeLength(6);
-            settings.setMaxUsers(10);
-            settings.setMaxPackagesPerMonth(1000);
-
-            TenantEntity defaultTenant = TenantEntity.builder()
-                    .tenantId(DEFAULT_TENANT_ID)
-                    .companyName("Default Tenant")
-                    .domain(null)
-                    .active(true)
-                    .status(TenantStatus.ACTIVE)
-                    .plan(SubscriptionPlan.STARTER)
-                    .subscriptionStartsAt(Instant.now())
-                    .subscriptionExpiresAt(Instant.now().plus(365, ChronoUnit.DAYS))
-                    .settings(settings)
-                    .build();
-
-            tenantRepository.save(defaultTenant);
-        }
 
         if (tenantRepository.findByTenantId(SYSTEM_TENANT_ID).isEmpty()) {
             TenantSettings systemSettings = new TenantSettings();
@@ -62,13 +41,10 @@ public class TenantBootstrap implements ApplicationRunner {
                     .status(TenantStatus.ACTIVE)
                     .plan(SubscriptionPlan.ENTERPRISE)
                     .subscriptionStartsAt(Instant.now())
-                    .subscriptionExpiresAt(Instant.now().plus(365, ChronoUnit.DAYS))
+                    .subscriptionExpiresAt(null) // system tenant never expires
                     .settings(systemSettings)
                     .build();
             tenantRepository.save(systemTenant);
         }
     }
-
-    /** Tenant ID used for the platform super-admin user (not a customer tenant). */
-    public static final String SYSTEM_TENANT_ID = "system";
 }

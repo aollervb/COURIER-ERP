@@ -20,6 +20,7 @@ import java.util.Optional;
 /**
  * For /api/public/** and /api/integration/**, authenticates via API key.
  * Reads X-API-Key or Authorization: Bearer &lt;key&gt;, validates, sets TenantContext and SecurityContext.
+ * The scoped tenant is set only from the tenant that owns the API key (from the lookup result), not from any other source.
  * Returns 401 if key is missing or invalid.
  */
 @Component
@@ -46,13 +47,15 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Lookup must run without tenant context so we find the key by hash only; tenant is set from the key owner below.
+        TenantContext.clear();
         Optional<String> tenantIdOpt = apiKeyService.validateAndGetTenantId(rawKey);
         if (tenantIdOpt.isEmpty()) {
             sendUnauthorized(response, "Invalid or expired API key");
             return;
         }
 
-        String tenantId = tenantIdOpt.get();
+        String tenantId = tenantIdOpt.get(); // tenant that owns the key
         TenantContext.setTenantId(tenantId);
         SecurityContextHolder.getContext().setAuthentication(
                 new ApiKeyAuthenticationToken(tenantId)

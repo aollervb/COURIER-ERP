@@ -1,10 +1,8 @@
 package com.menval.couriererp.auth.services;
 
-import com.menval.couriererp.auth.dto.SignUpRequest;
 import com.menval.couriererp.auth.models.UserRoles;
 
 public interface AuthService {
-    void signUp(SignUpRequest request);
 
     /**
      * Create a user in a specific tenant (e.g. first tenant admin). SUPER_ADMIN only.

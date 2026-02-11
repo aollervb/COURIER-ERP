@@ -1,6 +1,5 @@
 package com.menval.couriererp.auth.services;
 
-import com.menval.couriererp.auth.dto.SignUpRequest;
 import com.menval.couriererp.auth.models.BaseUser;
 import com.menval.couriererp.auth.models.UserRoles;
 import com.menval.couriererp.auth.repository.UserRepository;
@@ -17,21 +16,6 @@ import java.util.Set;
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Override
-    public void signUp(SignUpRequest signUpRequest) {
-        userRepository.save(BaseUser.builder()
-                .email(signUpRequest.getEmail())
-                .firstName(signUpRequest.getFirstName())
-                .lastName(signUpRequest.getLastName())
-                .password(passwordEncoder.encode(signUpRequest.getPassword()))
-                .roles(Set.of(UserRoles.DIRECTOR))
-                .accountNonExpired(true)
-                .credentialsNonExpired(true)
-                .accountNonLocked(true)
-                .enabled(true)
-                .build());
-    }
 
     @Override
     @PreAuthorize("hasRole('SUPER_ADMIN')")
