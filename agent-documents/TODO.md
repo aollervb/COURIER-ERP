@@ -17,21 +17,21 @@
 ### 1. Remove public signup page
 **Why:** `/auth/signup` is publicly accessible and creates a `DIRECTOR`-role user with no tenant — dead UX at best, confusion vector at worst.
 **Decision:** Tenant onboarding (super-admin) is the only entry point for new users. Remove or `@Deprecated`-gate the signup controller and Thymeleaf template.
-- [ ] Delete or disable `AuthController.signup()` and `POST /auth/signup`
-- [ ] Remove `signup.html` template (or keep as reference, commented out)
-- [ ] Remove `AuthService.signUp()` or make it package-private/internal-only
+- [X] Delete or disable `AuthController.signup()` and `POST /auth/signup`
+- [X] Remove `signup.html` template (or keep as reference, commented out)
+- [X] Remove `AuthService.signUp()` or make it package-private/internal-only
 
 ### 2. Fix `TenantBootstrap` expiry on system/default tenants
 **Why:** Both `system` and `default` tenants are created with `subscriptionExpiresAt = Instant.now().plus(365 days)`. In 365 days `isExpired()` returns `true`, locking the super-admin out of the platform.
 **Decision:** System and default tenants never expire.
-- [ ] Set `subscriptionExpiresAt = null` in `TenantBootstrap` for both `system` and `default` tenants
-- [ ] Add a comment to `TenantEntity.isExpired()` noting that `null` means "never expires" (it already handles null safely — just document it)
+- [X] Set `subscriptionExpiresAt = null` in `TenantBootstrap` for both `system` and `default` tenants
+- [X] Add a comment to `TenantEntity.isExpired()` noting that `null` means "never expires" (it already handles null safely — just document it)
 
 ### 3. Fix `ApiKeyAuthenticationFilter` — ensure tenant is never loaded into context from a non-tenant-scoped lookup
 **Why:** `ApiKeyEntity` may extend `TenantScopedBaseModel` (or be loaded while a stale `TenantContext` is set), meaning the key lookup itself could silently filter by the wrong tenant.
-- [ ] Confirm `ApiKeyEntity` does NOT extend `TenantScopedBaseModel`
-- [ ] Confirm `ApiKeyRepository.findByKeyHash()` runs without any active tenant context (call `TenantContext.clear()` before the lookup if needed)
-- [ ] Add a test: validate that a key belonging to tenant B cannot be resolved when the context is set to tenant A
+- [X] Confirm `ApiKeyEntity` does NOT extend `TenantScopedBaseModel`
+- [x] Confirm `ApiKeyRepository.findByKeyHash()` runs without any active tenant context (call `TenantContext.clear()` before the lookup if needed)
+- [X] Add a test: validate that a key belonging to tenant B cannot be resolved when the context is set to tenant A
 
 ---
 
