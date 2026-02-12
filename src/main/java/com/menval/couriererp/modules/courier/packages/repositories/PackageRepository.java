@@ -5,6 +5,7 @@ import com.menval.couriererp.modules.courier.packages.entities.PackageEntity;
 import com.menval.couriererp.modules.courier.packages.entities.PackageStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,29 +21,29 @@ public interface PackageRepository extends JpaRepository<PackageEntity, Long> {
 
     Page<PackageEntity> findByStatus(PackageStatus status, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"owner"})
+    @EntityGraph(attributePaths = {"owner"})
     @Query("SELECT p FROM PackageEntity p")
     Page<PackageEntity> findAllWithOwner(Pageable pageable);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"owner"})
+    @EntityGraph(attributePaths = {"owner"})
     @Query("SELECT p FROM PackageEntity p WHERE p.status = :status")
     Page<PackageEntity> findByStatusWithOwner(@Param("status") PackageStatus status, Pageable pageable);
 
     List<PackageEntity> findByBatch_Id(Long batchId);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"owner"})
+    @EntityGraph(attributePaths = {"owner"})
     @Query("SELECT p FROM PackageEntity p WHERE p.batch.id = :batchId")
     List<PackageEntity> findByBatch_IdWithOwner(@Param("batchId") Long batchId);
 
     Page<PackageEntity> findByStatusAndBatchIsNull(PackageStatus status, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"owner"})
+    @EntityGraph(attributePaths = {"owner"})
     @Query("SELECT p FROM PackageEntity p WHERE p.status = :status AND p.batch IS NULL")
     Page<PackageEntity> findByStatusAndBatchIsNullWithOwner(@Param("status") PackageStatus status, Pageable pageable);
 
     Page<PackageEntity> findByStatusIn(List<PackageStatus> statuses, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"owner"})
+    @EntityGraph(attributePaths = {"owner"})
     @Query("SELECT p FROM PackageEntity p WHERE p.status IN :statuses")
     Page<PackageEntity> findByStatusInWithOwner(@Param("statuses") List<PackageStatus> statuses, Pageable pageable);
 }
