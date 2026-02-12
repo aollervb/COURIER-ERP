@@ -62,12 +62,12 @@
 
 ### 7. API key rotation and revocation
 **Why:** There is currently no way to delete/revoke an API key once created.
-- [ ] Add `DELETE /settings/api-keys/{id}` endpoint
-- [ ] Add revoke button to `settings/api-keys.html`
-- [ ] Add `expiresAt` (Instant, nullable) field to `ApiKeyEntity` — null means no expiry
-- [ ] Update `validateAndGetTenantId()` to reject keys where `expiresAt != null && now.isAfter(expiresAt)`
-- [ ] Add `lastUsedAt` (Instant) field to `ApiKeyEntity` and update it on each successful validation (useful for auditing unused keys)
-- [ ] Expose key name, created date, last used, and expiry in the settings UI
+- [X] Add `DELETE /settings/api-keys/{id}` endpoint
+- [X] Add revoke button to `settings/api-keys.html`
+- [X] Add `expiresAt` (Instant, nullable) field to `ApiKeyEntity` — null means no expiry
+- [X] Update `validateAndGetTenantId()` to reject keys where `expiresAt != null && now.isAfter(expiresAt)`
+- [X] Add `lastUsedAt` (Instant) field to `ApiKeyEntity` and update it on each successful validation (useful for auditing unused keys)
+- [x] Expose key name, created date, last used, and expiry in the settings UI
 
 ---
 
