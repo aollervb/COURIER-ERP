@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Package batches</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1>Package batches</h1>
+
+<p><a th:href="@{/packages}">Packages</a> | <a th:href="@{/packages/receiving}">Receive</a> | <a th:href="@{/packages/dispatch}">Dispatch</a></p>
+
+<p th:if="${message}" th:text="${message}" style="color: green;"></p>
+<p th:if="${error}" th:text="${error}" style="color: red;"></p>
+
+<p><a th:href="@{/packages/batches/new}">Create new batch</a></p>
+
+<table border="1" cellspacing="0" cellpadding="6">
+    <thead>
+    <tr>
+        <th>Reference</th>
+        <th>Mode</th>
+        <th>Origin</th>
+        <th>Destination</th>
+        <th>Status</th>
+        <th>Packages</th>
+        <th>Planned departure</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="b : ${batches}">
+        <td><a th:href="@{/packages/batches/{id}(id=${b.id})}" th:text="${b.referenceCode}">REF</a></td>
+        <td th:text="${b.transportMode}">Mode</td>
+        <td th:text="${b.originFacilityCode}">Origin</td>
+        <td th:text="${b.destinationFacilityCode}">Destination</td>
+        <td th:text="${b.status}">Status</td>
+        <td th:text="${b.packageCount}">0</td>
+        <td th:text="${b.plannedDepartureAt != null ? #temporals.format(b.plannedDepartureAt, 'yyyy-MM-dd HH:mm') : '–'}">–</td>
+        <td><a th:href="@{/packages/batches/{id}(id=${b.id})}">View</a></td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(batches)}">
+        <td colspan="8">No batches.</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

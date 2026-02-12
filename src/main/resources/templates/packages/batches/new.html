@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Create batch</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1>Create batch</h1>
+
+<p><a th:href="@{/packages/batches}">Back to batches</a></p>
+
+<p th:if="${error}" th:text="${error}" style="color: red;"></p>
+
+<form th:action="@{/packages/batches/new}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <label for="referenceCode">Reference code</label>
+    <input type="text" id="referenceCode" name="referenceCode" required maxlength="40" placeholder="e.g. BATCH-2026-001"/><br/>
+
+    <label for="transportMode">Transport mode</label>
+    <select id="transportMode" name="transportMode" required>
+        <option th:each="m : ${transportModes}" th:value="${m.name()}" th:text="${m.name()}">AIR</option>
+    </select><br/>
+
+    <label for="originFacilityCode">Origin facility code</label>
+    <input type="text" id="originFacilityCode" name="originFacilityCode" required maxlength="32" placeholder="e.g. MIA"/><br/>
+
+    <label for="destinationFacilityCode">Destination facility code</label>
+    <input type="text" id="destinationFacilityCode" name="destinationFacilityCode" required maxlength="32" placeholder="e.g. SDQ"/><br/>
+
+    <label for="destinationCountry">Destination country (ISO 2)</label>
+    <input type="text" id="destinationCountry" name="destinationCountry" required maxlength="2" placeholder="DO" value="DO"/><br/>
+
+    <label for="plannedDepartureAt">Planned departure (optional)</label>
+    <input type="datetime-local" id="plannedDepartureAt" name="plannedDepartureAt" step="any"/><br/>
+
+    <label for="containerType">Container type (optional)</label>
+    <input type="text" id="containerType" name="containerType" maxlength="24" placeholder="BAG, PALLET, ULD"/><br/>
+
+    <button type="submit">Create batch</button>
+</form>
+
+</body>
+</html>

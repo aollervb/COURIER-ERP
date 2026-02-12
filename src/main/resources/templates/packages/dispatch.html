@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dispatch packages</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1>Dispatch packages</h1>
+
+<p><a th:href="@{/packages}">Packages</a> | <a th:href="@{/packages/receiving}">Receive</a> | <a th:href="@{/packages/batches}">Batches</a></p>
+
+<p th:if="${message}" th:text="${message}" style="color: green;"></p>
+<p th:if="${error}" th:text="${error}" style="color: red;"></p>
+
+<p>Packages at final warehouse (RECEIVED_FINAL) or out for delivery (OUT_FOR_DELIVERY):</p>
+
+<table border="1" cellspacing="0" cellpadding="6">
+    <thead>
+    <tr>
+        <th>Carrier</th>
+        <th>Tracking number</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${packages.content}">
+        <td th:text="${p.carrier}">Carrier</td>
+        <td th:text="${p.originalTrackingNumber}">Tracking</td>
+        <td th:text="${p.owner != null ? p.owner.code : '–'}">–</td>
+        <td th:text="${p.status}">Status</td>
+        <td>
+            <span th:if="${p.status.name() == 'RECEIVED_FINAL' or p.status.name() == 'ARRIVED_DR'}">
+                <form th:action="@{/packages/dispatch/{id}/out-for-delivery(id=${p.id})}" method="post" style="display:inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit">Mark out for delivery</button>
+                </form>
+            </span>
+            <span th:if="${p.status.name() == 'OUT_FOR_DELIVERY'}">
+                <form th:action="@{/packages/dispatch/{id}/delivered(id=${p.id})}" method="post" style="display:inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit">Mark delivered</button>
+                </form>
+            </span>
+        </td>
+    </tr>
+    <tr th:if="${packages.totalElements == 0}">
+        <td colspan="5">No packages ready for dispatch.</td>
+    </tr>
+    </tbody>
+</table>
+
+<div>
+    <span th:text="'Showing ' + ${packages.numberOfElements} + ' of ' + ${packages.totalElements}"></span>
+    <a th:if="${packages.hasPrevious()}" th:href="@{/packages/dispatch(page=${packages.number - 1}, size=${packages.size})}">Prev</a>
+    <span th:text="'Page ' + (${packages.number} + 1) + ' / ' + ${packages.totalPages}"></span>
+    <a th:if="${packages.hasNext()}" th:href="@{/packages/dispatch(page=${packages.number + 1}, size=${packages.size})}">Next</a>
+</div>
+
+</body>
+</html>

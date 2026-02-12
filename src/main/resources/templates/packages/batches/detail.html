@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Batch</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1>Batch: <span th:text="${batch.referenceCode}">REF</span></h1>
+
+<p><a th:href="@{/packages/batches}">Back to batches</a></p>
+
+<p th:if="${message}" th:text="${message}" style="color: green;"></p>
+<p th:if="${error}" th:text="${error}" style="color: red;"></p>
+
+<h2>Details</h2>
+<table border="1" cellspacing="0" cellpadding="6">
+    <tr><th>Reference</th><td th:text="${batch.referenceCode}">REF</td></tr>
+    <tr><th>Transport mode</th><td th:text="${batch.transportMode}">AIR</td></tr>
+    <tr><th>Origin</th><td th:text="${batch.originFacilityCode}">MIA</td></tr>
+    <tr><th>Destination</th><td th:text="${batch.destinationFacilityCode}">SDQ</td></tr>
+    <tr><th>Status</th><td th:text="${batch.status}">DRAFT</td></tr>
+    <tr><th>Package count</th><td th:text="${batch.packageCount}">0</td></tr>
+    <tr><th>Planned departure</th><td th:text="${batch.plannedDepartureAt != null ? #temporals.format(batch.plannedDepartureAt, 'yyyy-MM-dd HH:mm') : '–'}">–</td></tr>
+    <tr><th>Actual departure</th><td th:text="${batch.actualDepartureAt != null ? #temporals.format(batch.actualDepartureAt, 'yyyy-MM-dd HH:mm') : '–'}">–</td></tr>
+</table>
+
+<div th:if="${canAddRemove}">
+    <a th:href="@{/packages/batches/{id}/add-packages(id=${batch.id})}">Add packages</a>
+</div>
+<div th:if="${canSeal and batch.packageCount > 0}">
+    <form th:action="@{/packages/batches/{id}/seal(id=${batch.id})}" method="post" style="display:inline;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <button type="submit">Seal batch</button>
+    </form>
+</div>
+<div th:if="${canMarkInTransit}">
+    <form th:action="@{/packages/batches/{id}/in-transit(id=${batch.id})}" method="post" style="display:inline;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <button type="submit">Mark in transit</button>
+    </form>
+</div>
+<div th:if="${canReceiveAtDestination}">
+    <form th:action="@{/packages/batches/{id}/arrive(id=${batch.id})}" method="post" style="display:inline;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <label for="facilityCode">Facility code (optional)</label>
+        <input type="text" id="facilityCode" name="facilityCode" th:value="${batch.destinationFacilityCode}" maxlength="32"/>
+        <button type="submit">Receive at destination</button>
+    </form>
+</div>
+
+<h2>Packages in batch</h2>
+<table border="1" cellspacing="0" cellpadding="6">
+    <thead>
+    <tr>
+        <th>Carrier</th>
+        <th>Tracking number</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th th:if="${canAddRemove}">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${packages}">
+        <td th:text="${p.carrier}">Carrier</td>
+        <td th:text="${p.originalTrackingNumber}">Tracking</td>
+        <td th:text="${p.owner != null ? p.owner.code : '–'}">–</td>
+        <td th:text="${p.status}">Status</td>
+        <td th:if="${canAddRemove}">
+            <form th:action="@{/packages/batches/{batchId}/packages/{packageId}/remove(batchId=${batch.id}, packageId=${p.id})}" method="post" style="display:inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit">Remove</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(packages)}">
+        <td colspan="5">No packages in this batch.</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

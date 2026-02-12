@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Add packages to batch</title>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<h1>Add packages to batch: <span th:text="${batch.referenceCode}">REF</span></h1>
+
+<p><a th:href="@{/packages/batches/{id}(id=${batch.id})}">Back to batch</a></p>
+
+<p th:if="${error}" th:text="${error}" style="color: red;"></p>
+
+<form th:action="@{/packages/batches/{id}/packages(id=${batch.id})}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <p>Select packages to add (assigned, not yet in a batch):</p>
+
+    <table border="1" cellspacing="0" cellpadding="6">
+        <thead>
+        <tr>
+            <th>Select</th>
+            <th>Carrier</th>
+            <th>Tracking number</th>
+            <th>Owner</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${assignablePackages.content}">
+            <td><input type="checkbox" name="packageIds" th:value="${p.id}"/></td>
+            <td th:text="${p.carrier}">Carrier</td>
+            <td th:text="${p.originalTrackingNumber}">Tracking</td>
+            <td th:text="${p.owner != null ? p.owner.code : '–'}">–</td>
+            <td th:text="${p.status}">Status</td>
+        </tr>
+        <tr th:if="${assignablePackages.totalElements == 0}">
+            <td colspan="5">No assignable packages. Assign packages first from the packages list.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div th:if="${assignablePackages.totalElements > 0}">
+        <button type="submit">Add selected to batch</button>
+    </div>
+</form>
+
+<div>
+    <span th:text="'Showing ' + ${assignablePackages.numberOfElements} + ' of ' + ${assignablePackages.totalElements}"></span>
+    <a th:if="${assignablePackages.hasPrevious()}" th:href="@{/packages/batches/{id}/add-packages(id=${batch.id}, page=${assignablePackages.number - 1}, size=${assignablePackages.size})}">Prev</a>
+    <span th:text="'Page ' + (${assignablePackages.number} + 1) + ' / ' + ${assignablePackages.totalPages}"></span>
+    <a th:if="${assignablePackages.hasNext()}" th:href="@{/packages/batches/{id}/add-packages(id=${batch.id}, page=${assignablePackages.number + 1}, size=${assignablePackages.size})}">Next</a>
+</div>
+
+</body>
+</html>
