@@ -36,7 +36,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata-5:/var/lib/postgresql/data
+      - ale-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U app -d app" ]
       interval: 5s
@@ -44,4 +44,4 @@ services:
       retries: 20
     restart: unless-stopped
 volumes:
-  pgdata-5:
+  ale-data:

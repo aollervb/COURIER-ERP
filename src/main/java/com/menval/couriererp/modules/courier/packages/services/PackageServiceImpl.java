@@ -134,9 +134,9 @@ public class PackageServiceImpl implements PackageService {
     @Transactional(readOnly = true)
     public Page<PackageEntity> listAll(Pageable pageable, PackageStatus statusFilter) {
         if (statusFilter == null) {
-            return packageRepository.findAll(pageable);
+            return packageRepository.findAllWithOwner(pageable);
         }
-        return packageRepository.findByStatus(statusFilter, pageable);
+        return packageRepository.findByStatusWithOwner(statusFilter, pageable);
     }
 
     @Override
@@ -191,10 +191,6 @@ public class PackageServiceImpl implements PackageService {
         pkg.assignToAccount(account);
         pkg = packageRepository.save(pkg);
         PackageEventEntity event = pkg.createOwnerAssignedEvent(null, null, actor, null);
-
-        if (actor != null && actor.getUserTenantId() != null && !actor.getUserTenantId().isBlank()) {
-            TenantContext.setTenantId(actor.getUserTenantId());
-        }
         packageEventRepository.save(event);
         return pkg;
     }
@@ -202,13 +198,13 @@ public class PackageServiceImpl implements PackageService {
     @Override
     @Transactional(readOnly = true)
     public Page<PackageEntity> findAssignableForBatch(Pageable pageable) {
-        return packageRepository.findByStatusAndBatchIsNull(PackageStatus.RECEIVED_US_ASSIGNED, pageable);
+        return packageRepository.findByStatusAndBatchIsNullWithOwner(PackageStatus.RECEIVED_US_ASSIGNED, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PackageEntity> findReadyForDispatch(Pageable pageable) {
-        return packageRepository.findByStatusIn(
+        return packageRepository.findByStatusInWithOwner(
                 List.of(PackageStatus.RECEIVED_FINAL, PackageStatus.OUT_FOR_DELIVERY),
                 pageable);
     }
@@ -225,9 +221,6 @@ public class PackageServiceImpl implements PackageService {
         pkg.setLastSeenAt(Instant.now());
         pkg = packageRepository.save(pkg);
         PackageEventEntity event = pkg.createOutForDeliveryEvent(null, null, actor, null);
-        if (actor != null && actor.getUserTenantId() != null && !actor.getUserTenantId().isBlank()) {
-            TenantContext.setTenantId(actor.getUserTenantId());
-        }
         packageEventRepository.save(event);
         return pkg;
     }
@@ -244,9 +237,6 @@ public class PackageServiceImpl implements PackageService {
         pkg.setLastSeenAt(Instant.now());
         pkg = packageRepository.save(pkg);
         PackageEventEntity event = pkg.createDeliveredEvent(null, null, actor, null);
-        if (actor != null && actor.getUserTenantId() != null && !actor.getUserTenantId().isBlank()) {
-            TenantContext.setTenantId(actor.getUserTenantId());
-        }
         packageEventRepository.save(event);
         return pkg;
     }

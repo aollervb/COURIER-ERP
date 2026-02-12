@@ -82,7 +82,7 @@ public class PackageBatchController {
     public String detail(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         return batchService.findById(id)
                 .map(batch -> {
-                    List<PackageEntity> packages = packageRepository.findByBatch_Id(id);
+                    List<PackageEntity> packages = packageRepository.findByBatch_IdWithOwner(id);
                     model.addAttribute("batch", batch);
                     model.addAttribute("packages", packages);
                     model.addAttribute("canAddRemove", batch.isOpenForChanges());
