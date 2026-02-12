@@ -1,5 +1,6 @@
 package com.menval.couriererp.tenant.services;
 
+import com.menval.couriererp.tenant.dto.ApiKeySummary;
 import com.menval.couriererp.tenant.entities.ApiKeyEntity;
 import com.menval.couriererp.tenant.entities.TenantEntity;
 import com.menval.couriererp.tenant.repositories.ApiKeyRepository;
@@ -12,7 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -56,12 +59,63 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         }
         String keyHash = hash(rawKey);
         return apiKeyRepository.findByKeyHash(keyHash)
+                .filter(key -> !key.isSuspended())
                 .map(ApiKeyEntity::getTenantId)
                 .flatMap(tenantRepository::findByTenantId)
                 .filter(TenantEntity::isActive)
                 .filter(t -> !t.isExpired())
                 .filter(TenantEntity::canAccess)
                 .map(TenantEntity::getTenantId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApiKeySummary> listKeysForTenant(String tenantId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            return List.of();
+        }
+        return apiKeyRepository.findByTenantIdOrderByCreatedAtDesc(tenantId).stream()
+                .map(this::toSummary)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void suspendKey(String tenantId, Long keyId, String reason) {
+        ApiKeyEntity key = getKeyForTenant(tenantId, keyId);
+        key.setSuspended(true);
+        key.setSuspendedAt(Instant.now());
+        key.setSuspensionReason(reason != null ? reason.trim() : null);
+        apiKeyRepository.save(key);
+    }
+
+    @Override
+    @Transactional
+    public void unsuspendKey(String tenantId, Long keyId) {
+        ApiKeyEntity key = getKeyForTenant(tenantId, keyId);
+        key.setSuspended(false);
+        key.setSuspendedAt(null);
+        key.setSuspensionReason(null);
+        apiKeyRepository.save(key);
+    }
+
+    private ApiKeyEntity getKeyForTenant(String tenantId, Long keyId) {
+        ApiKeyEntity key = apiKeyRepository.findById(keyId).orElse(null);
+        if (key == null || !tenantId.equals(key.getTenantId())) {
+            throw new IllegalArgumentException("API key not found or access denied");
+        }
+        return key;
+    }
+
+    private ApiKeySummary toSummary(ApiKeyEntity e) {
+        return new ApiKeySummary(
+                e.getId(),
+                e.getName(),
+                e.getCreatedAt(),
+                e.isSuspended(),
+                e.getSuspendedAt(),
+                e.getSuspensionReason()
+        );
     }
 
     private static String hash(String value) {

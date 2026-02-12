@@ -67,4 +67,29 @@ class ApiKeyServiceTest {
         // Validate: must return tenant B (key owner), not tenant A (context).
         assertThat(apiKeyService.validateAndGetTenantId(rawKey)).contains(TENANT_B);
     }
+
+    @Test
+    void validateAndGetTenantId_returnsEmpty_whenKeyIsSuspended() {
+        TenantSettings settings = new TenantSettings();
+        TenantEntity tenant = TenantEntity.builder()
+                .tenantId(TENANT_A)
+                .companyName("Test Tenant A")
+                .active(true)
+                .status(TenantStatus.ACTIVE)
+                .plan(SubscriptionPlan.STARTER)
+                .subscriptionStartsAt(Instant.now())
+                .subscriptionExpiresAt(null)
+                .settings(settings)
+                .build();
+        tenantRepository.save(tenant);
+
+        String rawKey = apiKeyService.createApiKey(TENANT_A, "test-key");
+        assertThat(apiKeyService.validateAndGetTenantId(rawKey)).contains(TENANT_A);
+
+        var keys = apiKeyService.listKeysForTenant(TENANT_A);
+        assertThat(keys).hasSize(1);
+        apiKeyService.suspendKey(TENANT_A, keys.get(0).id(), "leaked");
+
+        assertThat(apiKeyService.validateAndGetTenantId(rawKey)).isEmpty();
+    }
 }

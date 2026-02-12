@@ -4,6 +4,8 @@ import com.menval.couriererp.modules.common.models.BaseModel;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 /**
  * API key for authenticating programmatic calls to /api/public/** and /api/integration/**.
  * Stored by key hash only; the raw key is returned once on creation.
@@ -29,4 +31,18 @@ public class ApiKeyEntity extends BaseModel {
 
     @Column(name = "name", nullable = false, length = 120)
     private String name;
+
+    @Column(name = "suspended", nullable = false)
+    @Builder.Default
+    private boolean suspended = false;
+
+    @Column(name = "suspended_at")
+    private Instant suspendedAt;
+
+    @Column(name = "suspension_reason", length = 500)
+    private String suspensionReason;
+
+    public boolean isSuspended() {
+        return suspended;
+    }
 }

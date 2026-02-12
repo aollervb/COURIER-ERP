@@ -36,6 +36,7 @@ public class AdminTenantMvcController {
     public String detail(@PathVariable String tenantId, Model model) {
         TenantEntity tenant = tenantService.getTenantById(tenantId);
         model.addAttribute("tenant", tenant);
+        model.addAttribute("apiKeys", apiKeyService.listKeysForTenant(tenantId));
         return "admin/tenants/detail";
     }
 
@@ -69,5 +70,30 @@ public class AdminTenantMvcController {
         redirectAttributes.addFlashAttribute("newApiKey", rawKey);
         redirectAttributes.addFlashAttribute("message", "API key created. Copy it now; it won’t be shown again.");
         return "redirect:/admin/tenants/" + tenantId + "/api-keys/new";
+    }
+
+    @PostMapping("/{tenantId}/api-keys/{id}/suspend")
+    public String suspendApiKey(@PathVariable String tenantId, @PathVariable Long id,
+                                @RequestParam(required = false) String reason,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            apiKeyService.suspendKey(tenantId, id, reason);
+            redirectAttributes.addFlashAttribute("message", "API key suspended.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", "API key not found or access denied.");
+        }
+        return "redirect:/admin/tenants/" + tenantId;
+    }
+
+    @PostMapping("/{tenantId}/api-keys/{id}/unsuspend")
+    public String unsuspendApiKey(@PathVariable String tenantId, @PathVariable Long id,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            apiKeyService.unsuspendKey(tenantId, id);
+            redirectAttributes.addFlashAttribute("message", "API key reactivated.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", "API key not found or access denied.");
+        }
+        return "redirect:/admin/tenants/" + tenantId;
     }
 }
