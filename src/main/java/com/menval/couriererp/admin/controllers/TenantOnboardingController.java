@@ -8,6 +8,8 @@ import com.menval.couriererp.tenant.services.CreateTenantCommand;
 import com.menval.couriererp.tenant.services.TenantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,6 +19,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -28,9 +34,10 @@ import java.time.temporal.ChronoUnit;
 @PreAuthorize("hasRole('SUPER_ADMIN')")
 @RequiredArgsConstructor
 public class TenantOnboardingController {
-
+    private static final Logger log = LoggerFactory.getLogger(TenantOnboardingController.class);
     private final TenantService tenantService;
     private final AuthService authService;
+
 
     @GetMapping("/new")
     public String newTenantForm(Model model) {
@@ -46,6 +53,8 @@ public class TenantOnboardingController {
             bindingResult.rejectValue("adminConfirmPassword", "password.mismatch", "Passwords do not match");
         }
         if (bindingResult.hasErrors()) {
+            log.error("Form validation failed, because of {}", bindingResult.getAllErrors());
+            model.addAttribute("form", form);
             model.addAttribute("plans", SubscriptionPlan.values());
             return "admin/tenants/new";
         }

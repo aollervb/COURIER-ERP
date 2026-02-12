@@ -26,7 +26,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * Runs after the Security filter chain so authentication is available.
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 20)
+@Order(Ordered.LOWEST_PRECEDENCE - 200)
 public class TenantAccessFilter extends OncePerRequestFilter {
 
     private final TenantRepository tenantRepository;
@@ -58,8 +58,12 @@ public class TenantAccessFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // SUPER_ADMIN with tenant "system" — no validation
+                // SUPER_ADMIN with tenant "system" — no validation; but deny tenant-operational paths
                 if (baseUser.isSuperAdmin() && "system".equals(tenantId)) {
+                    if (path.startsWith("/packages/")) {
+                        response.sendRedirect(request.getContextPath() + "/admin");
+                        return;
+                    }
                     TenantContext.setTenantId(tenantId);
                     filterChain.doFilter(request, response);
                     return;

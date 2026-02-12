@@ -31,7 +31,7 @@ public class OnboardTenantForm {
     @Size(max = 320)
     private String primaryContactEmail;
 
-    @Pattern(regexp = "^\\+?[0-9\\-\\s()]{7,20}$", message = "Invalid phone format")
+    @Pattern(regexp = "^$|^\\+?[0-9\\-\\s()]{7,20}$", message = "Invalid phone format")
     private String primaryContactPhone;
 
     @NotNull(message = "Plan is required")

@@ -52,6 +52,7 @@
         <th>Tracking number</th>
         <th>Received at</th>
         <th>Status</th>
+        <th>Audit</th>
     </tr>
     </thead>
     <tbody>
@@ -60,9 +61,12 @@
         <td th:text="${p.originalTrackingNumber}">Tracking</td>
         <td th:text="${#temporals.format(p.receivedAt, 'yyyy-MM-dd HH:mm')}">Received at</td>
         <td th:text="${p.status}">Status</td>
+        <td>
+            <button type="button" class="view-audit" th:attr="data-package-id=${p.id}, data-carrier=${p.carrier}, data-tracking=${p.originalTrackingNumber}">View audit</button>
+        </td>
     </tr>
     <tr th:if="${packages.totalElements == 0}">
-        <td colspan="4">No unassigned packages.</td>
+        <td colspan="5">No unassigned packages.</td>
     </tr>
     </tbody>
 </table>
@@ -73,6 +77,110 @@
     <span th:text="'Page ' + (${packages.number} + 1) + ' / ' + ${packages.totalPages}"></span>
     <a th:if="${packages.hasNext()}" th:href="@{/packages/receiving(page=${packages.number + 1}, size=${packages.size})}">Next</a>
 </div>
+
+<!-- Audit modal -->
+<div id="audit-modal" class="audit-modal" style="display: none;" aria-hidden="true">
+    <div class="audit-modal-overlay"></div>
+    <div class="audit-modal-content">
+        <div class="audit-modal-header">
+            <h2 id="audit-modal-title">Package audit</h2>
+            <button type="button" class="audit-modal-close" id="audit-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="audit-modal-body">
+            <p id="audit-loading" style="display: none;">Loading…</p>
+            <p id="audit-error" style="display: none;" class="audit-error"></p>
+            <table id="audit-events-table" border="1" cellspacing="0" cellpadding="6" style="width: 100%; display: none;">
+                <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Time</th>
+                    <th>Actor</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody id="audit-events-body"></tbody>
+            </table>
+            <p id="audit-empty" style="display: none;">No events recorded for this package.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.audit-modal { position: fixed; inset: 0; z-index: 1000; }
+.audit-modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
+.audit-modal-content { position: relative; margin: 2rem auto; max-width: 640px; background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); padding: 1rem 1.5rem; max-height: 90vh; overflow: auto; }
+.audit-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.audit-modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; line-height: 1; color: #666; }
+.audit-modal-close:hover { color: #000; }
+.audit-error { color: #c00; }
+</style>
+
+<script th:inline="javascript">
+(function() {
+    const modal = document.getElementById('audit-modal');
+    const overlay = modal && modal.querySelector('.audit-modal-overlay');
+    const closeBtn = document.getElementById('audit-modal-close');
+    const titleEl = document.getElementById('audit-modal-title');
+    const loadingEl = document.getElementById('audit-loading');
+    const errorEl = document.getElementById('audit-error');
+    const tableEl = document.getElementById('audit-events-table');
+    const tbodyEl = document.getElementById('audit-events-body');
+    const emptyEl = document.getElementById('audit-empty');
+
+    function showModal() { modal.style.display = 'block'; modal.setAttribute('aria-hidden', 'false'); }
+    function hideModal() { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); }
+
+    function formatEventTime(iso) {
+        if (!iso) return '–';
+        const d = new Date(iso);
+        return isNaN(d.getTime()) ? iso : d.toLocaleString();
+    }
+
+    function showAudit(packageId, carrier, tracking) {
+        titleEl.textContent = 'Audit: ' + (carrier || '') + ' – ' + (tracking || packageId);
+        loadingEl.style.display = 'block';
+        errorEl.style.display = 'none';
+        tableEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+        tbodyEl.innerHTML = '';
+        showModal();
+
+        var url = '/packages/receiving/' + packageId + '/events';
+        fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(events) {
+                loadingEl.style.display = 'none';
+                if (!events || events.length === 0) {
+                    emptyEl.style.display = 'block';
+                    return;
+                }
+                tableEl.style.display = 'table';
+                events.forEach(function(ev) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + (ev.eventType || '–') + '</td><td>' + formatEventTime(ev.eventTime) + '</td><td>' + (ev.actorName || ev.actorEmail || '–') + '</td><td>' + (ev.notes || '–') + '</td>';
+                    tbodyEl.appendChild(tr);
+                });
+            })
+            .catch(function(err) {
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorEl.textContent = 'Could not load audit events.';
+            });
+    }
+
+    document.querySelectorAll('.view-audit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = btn.getAttribute('data-package-id');
+            var carrier = btn.getAttribute('data-carrier') || '';
+            var tracking = btn.getAttribute('data-tracking') || '';
+            if (id) showAudit(id, carrier, tracking);
+        });
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', hideModal);
+    if (overlay) overlay.addEventListener('click', hideModal);
+})();
+</script>
 
 </body>
 </html>

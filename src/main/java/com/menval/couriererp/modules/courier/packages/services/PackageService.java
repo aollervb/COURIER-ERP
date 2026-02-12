@@ -1,5 +1,7 @@
 package com.menval.couriererp.modules.courier.packages.services;
 
+import com.menval.couriererp.auth.models.BaseUser;
+import com.menval.couriererp.modules.courier.packages.dto.PackageEventDto;
 import com.menval.couriererp.modules.courier.packages.entities.Carrier;
 import com.menval.couriererp.modules.courier.packages.entities.PackageEntity;
 import org.springframework.data.domain.Page;
@@ -12,14 +14,16 @@ public interface PackageService {
     /**
      * Receive a package by carrier + tracking number. Creates a package with no owner,
      * status RECEIVED_US_UNASSIGNED. Idempotent: if same carrier+tracking already exists in tenant, returns existing.
+     * @param actor the user performing the receive (for audit); may be null e.g. for API.
      */
-    PackageEntity receivePackage(Carrier carrier, String originalTrackingNumber);
+    PackageEntity receivePackage(Carrier carrier, String originalTrackingNumber, BaseUser actor);
 
     /**
      * Receive a batch of packages (same carrier). Each tracking number is processed idempotently.
      * Blank lines are skipped and reported in invalidLines. Returns counts of newly received, duplicates, and invalid.
+     * @param actor the user performing the receive (for audit); may be null e.g. for API.
      */
-    BatchReceiveResult receivePackages(Carrier carrier, List<String> trackingNumbers);
+    BatchReceiveResult receivePackages(Carrier carrier, List<String> trackingNumbers, BaseUser actor);
 
     /**
      * Look up received status by tracking number only (for public/customer API).
@@ -38,7 +42,14 @@ public interface PackageService {
      *
      * @param packageId  package to assign
      * @param accountCode account code (e.g. CR-7K2P9D)
+     * @param actor the user performing the assignment (for audit); may be null.
      * @return the updated package
      */
-    PackageEntity assignPackageToAccount(Long packageId, String accountCode);
+    PackageEntity assignPackageToAccount(Long packageId, String accountCode, BaseUser actor);
+
+    /**
+     * List audit events for a package (ordered by event time ascending).
+     * Returns empty if package not found or not in current tenant.
+     */
+    List<PackageEventDto> getEventsForPackage(Long packageId);
 }

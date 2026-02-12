@@ -1,5 +1,6 @@
 package com.menval.couriererp.modules.courier.packages.entities;
 
+import com.menval.couriererp.auth.models.BaseUser;
 import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import com.menval.couriererp.modules.courier.account.entities.AccountEntity;
 import jakarta.persistence.*;
@@ -121,5 +122,25 @@ public class PackageEntity extends TenantScopedBaseModel {
         this.owner = account;
         this.status = PackageStatus.RECEIVED_US_ASSIGNED;
         this.lastSeenAt = Instant.now();
+    }
+
+    // --- Package event creation (domain logic: which event type for which domain action) ---
+
+    /**
+     * Create a RECEIVED_US event for this package (e.g. when the package has just been received).
+     * Caller is responsible for persisting the returned entity.
+     */
+    public PackageEventEntity createReceivedEvent(Instant eventTime, String facilityCode, BaseUser actor, String notes) {
+        Instant time = eventTime != null ? eventTime : this.getReceivedAt();
+        return PackageEventEntity.of(this, PackageEventType.RECEIVED_US, time, facilityCode, actor, notes);
+    }
+
+    /**
+     * Create an OWNER_ASSIGNED event for this package (e.g. when the package has just been assigned to an account).
+     * Caller is responsible for persisting the returned entity.
+     */
+    public PackageEventEntity createOwnerAssignedEvent(Instant eventTime, String facilityCode, BaseUser actor, String notes) {
+        Instant time = eventTime != null ? eventTime : Instant.now();
+        return PackageEventEntity.of(this, PackageEventType.OWNER_ASSIGNED, time, facilityCode, actor, notes);
     }
 }

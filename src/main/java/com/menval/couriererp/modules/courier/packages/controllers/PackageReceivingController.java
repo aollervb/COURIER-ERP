@@ -1,20 +1,28 @@
 package com.menval.couriererp.modules.courier.packages.controllers;
 
+import com.menval.couriererp.auth.models.BaseUser;
+import com.menval.couriererp.modules.courier.packages.dto.PackageEventDto;
 import com.menval.couriererp.modules.courier.packages.entities.Carrier;
 import com.menval.couriererp.modules.courier.packages.entities.PackageEntity;
 import com.menval.couriererp.modules.courier.packages.entities.PackageStatus;
 import com.menval.couriererp.modules.courier.packages.services.BatchReceiveResult;
 import com.menval.couriererp.modules.courier.packages.services.PackageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +31,7 @@ import java.util.stream.Stream;
 /**
  * ERP view for warehouse: receive packages by scanning or manually entering tracking number.
  */
+@Slf4j
 @Controller
 @RequestMapping("/packages/receiving")
 @RequiredArgsConstructor
@@ -43,18 +52,30 @@ public class PackageReceivingController {
         return "packages/receiving";
     }
 
+    /**
+     * Returns audit events for a package (JSON for modal).
+     */
+    @GetMapping("/{packageId}/events")
+    @ResponseBody
+    public List<PackageEventDto> getPackageEvents(@PathVariable Long packageId) {
+        return packageService.getEventsForPackage(packageId);
+    }
+
     @PostMapping
     public String receivePackages(@RequestParam("carrier") Carrier carrier,
                                   @RequestParam("trackingNumbers") String trackingNumbersRaw,
+                                  @AuthenticationPrincipal BaseUser user,
                                   RedirectAttributes redirectAttributes) {
         List<String> lines = parseTrackingLines(trackingNumbersRaw);
+        log.error("ALE {} {} {}", user.getId(), user.getFirstName(), user.getLastName());
         if (lines.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Enter at least one tracking number (one per line).");
             return "redirect:/packages/receiving";
         }
         BatchReceiveResult result = packageService.receivePackages(
                 carrier != null ? carrier : Carrier.UNKNOWN,
-                lines
+                lines,
+                user
         );
         redirectAttributes.addFlashAttribute("batchResult", result);
         if (result.receivedCount() > 0) {
