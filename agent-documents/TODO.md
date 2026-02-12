@@ -1,5 +1,7 @@
 # Courier ERP – Development TODO
-*Last updated: February 11, 2026*
+*Last updated: February 12, 2026*
+
+**Related documents:** [architecture.md](architecture.md) | [test-run.md](test-run.md)
 
 ---
 
@@ -9,6 +11,12 @@
 - ~~API key authentication~~ → `ApiKeyAuthenticationFilter`, SHA-256 hashed storage, `ApiKeyService` complete
 - ~~Tenant lifecycle~~ → suspend, activate, expire, plan limits wired up
 - ~~`PackageEntity.assignToAccount()`~~ → domain method with pre-condition validation
+- ~~Package list + assign~~ → `/packages` with status filter; assign via modal (search account, assign); `PackageListController`, `PackageService.listAll` with owner fetch
+- ~~Package batches~~ → create batch, add/remove packages, seal, in transit, receive at destination; `PackageBatchController`, `PackageBatchServiceImpl`, batch list/detail/add-packages
+- ~~Receive at final warehouse~~ → batch status ARRIVED; packages `RECEIVED_FINAL`; receiving flow in `PackageReceivingController` / batch receive
+- ~~Dispatch to customers~~ → `/packages/dispatch`; mark out for delivery / delivered; `PackageDispatchController`, `PackageService.findReadyForDispatch` with owner fetch
+- ~~LazyInitializationException on package list~~ → repository methods with `@EntityGraph(attributePaths = {"owner"})` for list, dispatch, batch detail, add-packages
+- ~~Database seed~~ → `DatabaseSeedRunner`: demo tenant, admin user, sample accounts, packages, batches
 
 ---
 
@@ -83,8 +91,8 @@
 ### 9. Redirect after receiving + "received, unassigned" page
 *(carried from old TODO #1)*
 - [ ] After batch receive POST, redirect to `/packages/unassigned`
-- [ ] `/packages/unassigned` shows all `RECEIVED_US_UNASSIGNED` packages, paginated
-- [ ] Include quick-assign control on that page
+- [X] `/packages` shows all packages with optional status filter (includes RECEIVED_US_UNASSIGNED)
+- [X] Quick-assign control on list page (assign modal with account search)
 
 ### 10. Auto-assign from inbound notice
 *(carried from old TODO #2)*
@@ -94,9 +102,9 @@
 
 ### 11. Manual assign package to account
 *(carried from old TODO #3)*
-- [ ] UI flow: select package → search/select account → confirm assignment
-- [ ] Call `PackageService.assignPackageToAccount(packageId, accountCode)`
-- [ ] Show success/error flash on redirect
+- [X] UI flow: select package → search/select account → confirm assignment (modal on `/packages`)
+- [X] Call `PackageService.assignPackageToAccount(packageId, accountCode)`
+- [X] Show success/error flash on redirect
 
 ### 12. Sequential account code generation
 **Why:** `AccountCounterService` is a stub — all codes are random today. Sequential codes (e.g. `CR-000123`) are more operator-friendly.
@@ -113,9 +121,9 @@
 
 ### 14. Package batches for transport
 *(carried from old TODO #4, #6)*
-- [ ] Flesh out `PackageBatchEntity` — status transitions, adding/removing packages
-- [ ] UI to create a batch and add assigned packages to it
-- [ ] Batch status flow: OPEN → SEALED → IN_TRANSIT → DELIVERED
+- [X] Flesh out `PackageBatchEntity` — status transitions (OPEN → CLOSED → IN_TRANSIT → ARRIVED → COMPLETED), adding/removing packages
+- [X] UI to create a batch and add assigned packages to it (`/packages/batches`, detail, add-packages, seal, in transit, receive at destination)
+- [X] Batch status flow: OPEN → CLOSED → IN_TRANSIT → ARRIVED → COMPLETED
 
 ### 15. Manifest from package batch
 *(carried from old TODO #7)*
@@ -124,14 +132,14 @@
 
 ### 16. Receive packages at final warehouse
 *(carried from old TODO #8)*
-- [ ] Flow to mark packages as arrived at final warehouse
-- [ ] Update `PackageStatus` accordingly (new status needed: e.g. `RECEIVED_FINAL`)
-- [ ] Trigger via scan or manual entry
+- [X] Flow to mark packages as arrived at final warehouse (batch receive at destination; packages → RECEIVED_FINAL)
+- [X] Update `PackageStatus` accordingly (RECEIVED_FINAL)
+- [ ] Trigger via scan or manual entry (manual flow exists)
 
 ### 17. Dispatch packages to customers
 *(carried from old TODO #9)*
-- [ ] Mark package as dispatched / out for delivery / delivered
-- [ ] Record dispatch timestamp and operator
+- [X] Mark package as dispatched / out for delivery / delivered (`/packages/dispatch`)
+- [X] Record dispatch timestamp and operator (PackageEventEntity)
 
 ---
 
@@ -144,7 +152,7 @@
 - [ ] Consistent API error envelope (currently only `ApiExceptionHandler` covers the integration controller)
 
 ### 19. Test coverage
-**Currently: 1 smoke test. Target: meaningful coverage of critical paths.**
+**Currently: 1 smoke test (`CourierErpApplicationTests`) + 2 API key tests (`ApiKeyServiceTest`: tenant isolation and key suspension). Target: meaningful coverage of critical paths.**
 - [ ] Tenant isolation test: query under tenant A must not return tenant B's data (`@DataJpaTest`)
 - [ ] `PackageEntity.assignToAccount()` unit tests: inactive account, already-assigned, happy path
 - [ ] `ApiKeyAuthenticationFilter` integration test: missing key → 401, invalid key → 401, valid key → 200 with correct tenant
@@ -160,6 +168,15 @@
 
 ---
 
-### TODOS Extras:
+### In-code TODOs (for reference)
+
+- **PackageServiceImpl** (around line 170): `// TODO: investigate why the actor is null here` — event actor null in some path.
+- **PackageEntity** (around line 32): `// TODO: OCR Capable Scanner ?` — optional future enhancement.
+- **SequentialCodeGenerator**: `// TODO: Change account code <CR> to be configurable by the customer` — prefix/config for sequential codes.
+
+---
+
+### TODOS Extras
+
 - [ ] Azul
 - [ ] Agregar parametros al @TenantEntity para integracion con Azul
