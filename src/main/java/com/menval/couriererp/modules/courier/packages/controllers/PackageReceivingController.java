@@ -1,7 +1,6 @@
 package com.menval.couriererp.modules.courier.packages.controllers;
 
 import com.menval.couriererp.auth.models.BaseUser;
-import com.menval.couriererp.modules.courier.packages.dto.PackageEventDto;
 import com.menval.couriererp.modules.courier.packages.entities.Carrier;
 import com.menval.couriererp.modules.courier.packages.entities.PackageEntity;
 import com.menval.couriererp.modules.courier.packages.entities.PackageStatus;
@@ -14,15 +13,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,15 +45,6 @@ public class PackageReceivingController {
         );
         model.addAttribute("packages", unassigned);
         return "packages/receiving";
-    }
-
-    /**
-     * Returns audit events for a package (JSON for modal).
-     */
-    @GetMapping("/{packageId}/events")
-    @ResponseBody
-    public List<PackageEventDto> getPackageEvents(@PathVariable Long packageId) {
-        return packageService.getEventsForPackage(packageId);
     }
 
     @PostMapping

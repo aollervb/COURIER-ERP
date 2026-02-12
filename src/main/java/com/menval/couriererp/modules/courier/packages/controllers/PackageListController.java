@@ -1,9 +1,6 @@
 package com.menval.couriererp.modules.courier.packages.controllers;
 
 import com.menval.couriererp.auth.models.BaseUser;
-import com.menval.couriererp.modules.courier.account.entities.AccountEntity;
-import com.menval.couriererp.modules.courier.account.services.AccountService;
-import com.menval.couriererp.modules.courier.packages.dto.AccountSearchItem;
 import com.menval.couriererp.modules.courier.packages.entities.PackageEntity;
 import com.menval.couriererp.modules.courier.packages.entities.PackageStatus;
 import com.menval.couriererp.modules.courier.packages.services.PackageService;
@@ -17,11 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 /**
  * List all packages (with optional status filter) and assign package to account via modal (search + pick).
@@ -32,7 +26,6 @@ import java.util.List;
 public class PackageListController {
 
     private final PackageService packageService;
-    private final AccountService accountService;
 
     @GetMapping
     public String list(Model model,
@@ -44,16 +37,6 @@ public class PackageListController {
         model.addAttribute("statusFilter", statusFilter);
         model.addAttribute("allStatuses", PackageStatus.values());
         return "packages/list";
-    }
-
-    @GetMapping("/accounts/search")
-    @ResponseBody
-    public List<AccountSearchItem> searchAccounts(@RequestParam(name = "q", required = false) String q,
-                                                  @RequestParam(name = "size", defaultValue = "20") int size) {
-        Page<AccountEntity> accounts = accountService.search(q, true, PageRequest.of(0, size));
-        return accounts.getContent().stream()
-                .map(a -> new AccountSearchItem(a.getCode(), a.getDisplayName()))
-                .toList();
     }
 
     @PostMapping("/{packageId}/assign")
