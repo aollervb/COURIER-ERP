@@ -33,6 +33,11 @@ public interface PackageService {
     ReceivedStatus getReceivedStatusByTrackingNumber(String trackingNumber);
 
     /**
+     * List packages with optional status filter. When statusFilter is null, returns all packages (paginated).
+     */
+    Page<PackageEntity> listAll(Pageable pageable, com.menval.couriererp.modules.courier.packages.entities.PackageStatus statusFilter);
+
+    /**
      * List packages by status (e.g. RECEIVED_US_UNASSIGNED for warehouse view).
      */
     Page<PackageEntity> findByStatus(com.menval.couriererp.modules.courier.packages.entities.PackageStatus status, Pageable pageable);
@@ -52,4 +57,12 @@ public interface PackageService {
      * Returns empty if package not found or not in current tenant.
      */
     List<PackageEventDto> getEventsForPackage(Long packageId);
+
+    Page<PackageEntity> findAssignableForBatch(Pageable pageable);
+
+    Page<PackageEntity> findReadyForDispatch(Pageable pageable);
+
+    PackageEntity markOutForDelivery(Long packageId, BaseUser actor);
+
+    PackageEntity markDelivered(Long packageId, BaseUser actor);
 }

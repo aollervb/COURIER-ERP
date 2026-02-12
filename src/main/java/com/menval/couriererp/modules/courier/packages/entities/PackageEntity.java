@@ -3,6 +3,7 @@ package com.menval.couriererp.modules.courier.packages.entities;
 import com.menval.couriererp.auth.models.BaseUser;
 import com.menval.couriererp.modules.common.models.TenantScopedBaseModel;
 import com.menval.couriererp.modules.courier.account.entities.AccountEntity;
+import com.menval.couriererp.modules.courier.packages.entities.batchPackages.PackageBatchEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,7 +15,8 @@ import java.time.Instant;
         indexes = {
                 @Index(name = "idx_packages_tracking", columnList = "carrier,originalTrackingNumber"),
                 @Index(name = "idx_packages_owner_account", columnList = "owner_account_id"),
-                @Index(name = "idx_packages_status", columnList = "status")
+                @Index(name = "idx_packages_status", columnList = "status"),
+                @Index(name = "idx_packages_batch", columnList = "batch_id")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uq_packages_tenant_carrier_tracking", columnNames = {"tenant_id", "carrier", "originalTrackingNumber"})
@@ -57,11 +59,9 @@ public class PackageEntity extends TenantScopedBaseModel {
     private int widthCm;
     private int heightCm;
 
-    /*
-     Optional: link to a receiving batch/cart
-     @Column(nullable = true, length = 32)
-     private String receivingBatchCode;
-     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "batch_id")
+    private PackageBatchEntity batch;
 
     /**
      * Create a new package in received state (no owner, RECEIVED_US_UNASSIGNED).
@@ -97,6 +97,10 @@ public class PackageEntity extends TenantScopedBaseModel {
      */
     public boolean canBeAssigned() {
         return !isAssigned() && status == PackageStatus.RECEIVED_US_UNASSIGNED;
+    }
+
+    public boolean canBeAddedToBatch() {
+        return status == PackageStatus.RECEIVED_US_ASSIGNED && batch == null;
     }
 
     /**
@@ -142,5 +146,20 @@ public class PackageEntity extends TenantScopedBaseModel {
     public PackageEventEntity createOwnerAssignedEvent(Instant eventTime, String facilityCode, BaseUser actor, String notes) {
         Instant time = eventTime != null ? eventTime : Instant.now();
         return PackageEventEntity.of(this, PackageEventType.OWNER_ASSIGNED, time, facilityCode, actor, notes);
+    }
+
+    public PackageEventEntity createArrivedDestinationEvent(Instant eventTime, String facilityCode, BaseUser actor, String notes) {
+        Instant time = eventTime != null ? eventTime : Instant.now();
+        return PackageEventEntity.of(this, PackageEventType.ARRIVED_DESTINATION, time, facilityCode, actor, notes);
+    }
+
+    public PackageEventEntity createOutForDeliveryEvent(Instant eventTime, String facilityCode, BaseUser actor, String notes) {
+        Instant time = eventTime != null ? eventTime : Instant.now();
+        return PackageEventEntity.of(this, PackageEventType.OUT_FOR_DELIVERY, time, facilityCode, actor, notes);
+    }
+
+    public PackageEventEntity createDeliveredEvent(Instant eventTime, String facilityCode, BaseUser actor, String notes) {
+        Instant time = eventTime != null ? eventTime : Instant.now();
+        return PackageEventEntity.of(this, PackageEventType.DELIVERED, time, facilityCode, actor, notes);
     }
 }

@@ -67,7 +67,6 @@ public class PackageReceivingController {
                                   @AuthenticationPrincipal BaseUser user,
                                   RedirectAttributes redirectAttributes) {
         List<String> lines = parseTrackingLines(trackingNumbersRaw);
-        log.error("ALE {} {} {}", user.getId(), user.getFirstName(), user.getLastName());
         if (lines.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Enter at least one tracking number (one per line).");
             return "redirect:/packages/receiving";
@@ -90,7 +89,7 @@ public class PackageReceivingController {
             redirectAttributes.addFlashAttribute("error",
                     result.invalidLines().size() + " invalid line(s): " + String.join(", ", result.invalidLines()));
         }
-        return "redirect:/packages/receiving";
+        return "redirect:/packages?status=RECEIVED_US_UNASSIGNED";
     }
 
     private static List<String> parseTrackingLines(String raw) {

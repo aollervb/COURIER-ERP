@@ -132,6 +132,15 @@ public class PackageServiceImpl implements PackageService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<PackageEntity> listAll(Pageable pageable, PackageStatus statusFilter) {
+        if (statusFilter == null) {
+            return packageRepository.findAll(pageable);
+        }
+        return packageRepository.findByStatus(statusFilter, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<PackageEntity> findByStatus(PackageStatus status, Pageable pageable) {
         return packageRepository.findByStatus(status, pageable);
     }
@@ -147,7 +156,6 @@ public class PackageServiceImpl implements PackageService {
         }
         List<PackageEventEntity> events = packageEventRepository.findByPkg_IdOrderByEventTimeAsc(packageId);
         log.debug("Found {} events for package {}", events.size(), packageId);
-        log.debug(events.get(0).toString());
         return events.stream()
                 .map(this::toEventDto)
                 .toList();
@@ -184,6 +192,61 @@ public class PackageServiceImpl implements PackageService {
         pkg = packageRepository.save(pkg);
         PackageEventEntity event = pkg.createOwnerAssignedEvent(null, null, actor, null);
 
+        if (actor != null && actor.getUserTenantId() != null && !actor.getUserTenantId().isBlank()) {
+            TenantContext.setTenantId(actor.getUserTenantId());
+        }
+        packageEventRepository.save(event);
+        return pkg;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PackageEntity> findAssignableForBatch(Pageable pageable) {
+        return packageRepository.findByStatusAndBatchIsNull(PackageStatus.RECEIVED_US_ASSIGNED, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PackageEntity> findReadyForDispatch(Pageable pageable) {
+        return packageRepository.findByStatusIn(
+                List.of(PackageStatus.RECEIVED_FINAL, PackageStatus.OUT_FOR_DELIVERY),
+                pageable);
+    }
+
+    @Override
+    @Transactional
+    public PackageEntity markOutForDelivery(Long packageId, BaseUser actor) {
+        PackageEntity pkg = packageRepository.findById(packageId)
+                .orElseThrow(() -> new IllegalArgumentException("Package not found: " + packageId));
+        if (pkg.getStatus() != PackageStatus.RECEIVED_FINAL && pkg.getStatus() != PackageStatus.ARRIVED_DR) {
+            throw new IllegalStateException("Package must be RECEIVED_FINAL or ARRIVED_DR; current: " + pkg.getStatus());
+        }
+        pkg.setStatus(PackageStatus.OUT_FOR_DELIVERY);
+        pkg.setLastSeenAt(Instant.now());
+        pkg = packageRepository.save(pkg);
+        PackageEventEntity event = pkg.createOutForDeliveryEvent(null, null, actor, null);
+        if (actor != null && actor.getUserTenantId() != null && !actor.getUserTenantId().isBlank()) {
+            TenantContext.setTenantId(actor.getUserTenantId());
+        }
+        packageEventRepository.save(event);
+        return pkg;
+    }
+
+    @Override
+    @Transactional
+    public PackageEntity markDelivered(Long packageId, BaseUser actor) {
+        PackageEntity pkg = packageRepository.findById(packageId)
+                .orElseThrow(() -> new IllegalArgumentException("Package not found: " + packageId));
+        if (pkg.getStatus() != PackageStatus.OUT_FOR_DELIVERY && pkg.getStatus() != PackageStatus.RECEIVED_FINAL) {
+            throw new IllegalStateException("Package must be OUT_FOR_DELIVERY or RECEIVED_FINAL; current: " + pkg.getStatus());
+        }
+        pkg.setStatus(PackageStatus.DELIVERED);
+        pkg.setLastSeenAt(Instant.now());
+        pkg = packageRepository.save(pkg);
+        PackageEventEntity event = pkg.createDeliveredEvent(null, null, actor, null);
+        if (actor != null && actor.getUserTenantId() != null && !actor.getUserTenantId().isBlank()) {
+            TenantContext.setTenantId(actor.getUserTenantId());
+        }
         packageEventRepository.save(event);
         return pkg;
     }

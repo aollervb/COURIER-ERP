@@ -7,14 +7,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PackageRepository extends JpaRepository<PackageEntity, Long> {
 
     Optional<PackageEntity> findByCarrierAndOriginalTrackingNumber(Carrier carrier, String originalTrackingNumber);
 
-    /** For public lookup by tracking number only (tenant from context). Returns first match if multiple carriers. */
     Optional<PackageEntity> findFirstByOriginalTrackingNumberOrderByReceivedAtDesc(String originalTrackingNumber);
 
     Page<PackageEntity> findByStatus(PackageStatus status, Pageable pageable);
+
+    List<PackageEntity> findByBatch_Id(Long batchId);
+
+    Page<PackageEntity> findByStatusAndBatchIsNull(PackageStatus status, Pageable pageable);
+
+    Page<PackageEntity> findByStatusIn(List<PackageStatus> statuses, Pageable pageable);
 }

@@ -8,6 +8,8 @@
 
 <h1>Receive packages</h1>
 
+<p><a th:href="@{/packages}">Packages</a> | <a th:href="@{/packages/batches}">Batches</a> | <a th:href="@{/packages/dispatch}">Dispatch</a></p>
+
 <p th:if="${message}" th:text="${message}" style="color: green;"></p>
 <p th:if="${error}" th:text="${error}" style="color: red;"></p>
 <div th:if="${batchResult}" th:with="r=${batchResult}">
