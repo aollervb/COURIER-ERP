@@ -167,14 +167,27 @@
                 }
                 tableEl.style.display = 'table';
                 items.forEach(function(a) {
-                    var tr = document.createElement('tr');
-                    var code = a.code || '';
+                    var code = (a.code || '').trim();
                     var name = (a.displayName || '').trim();
-                    tr.innerHTML = '<td>' + code + '</td><td>' + name + '</td><td><button type="button" class="assign-to-account" data-code="' + code.replace(/"/g, '&quot;') + '">Assign to this account</button></td>';
-                    tr.querySelector('.assign-to-account').addEventListener('click', function() {
+                    var tr = document.createElement('tr');
+                    var tdCode = document.createElement('td');
+                    var tdName = document.createElement('td');
+                    var tdAction = document.createElement('td');
+                    var btn = document.createElement('button');
+                    tdCode.textContent = code;
+                    tdName.textContent = name;
+                    btn.type = 'button';
+                    btn.className = 'assign-to-account';
+                    btn.setAttribute('data-code', code);
+                    btn.textContent = 'Assign to this account';
+                    btn.addEventListener('click', function() {
                         assignAccountCode.value = code;
                         assignForm.submit();
                     });
+                    tdAction.appendChild(btn);
+                    tr.appendChild(tdCode);
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdAction);
                     tbodyEl.appendChild(tr);
                 });
             })
